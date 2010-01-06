@@ -23,7 +23,8 @@
 
 /**************************** MODEL ******************************/
 
-typedef enum {BOOLEAN, FIXNUM, CHARACTER, STRING} object_type;
+typedef enum {THE_EMPTY_LIST, BOOLEAN, FIXNUM,
+              CHARACTER, STRING} object_type;
 
 typedef struct object {
     object_type type;
@@ -55,8 +56,13 @@ object *alloc_object(void) {
     return obj;
 }
 
+object *the_empty_list;
 object *false;
 object *true;
+
+char is_the_empty_list(object *obj) {
+    return obj == the_empty_list;
+}
 
 char is_boolean(object *obj) {
     return obj->type == BOOLEAN;
@@ -111,6 +117,9 @@ char is_string(object *obj) {
 }
 
 void init(void) {
+    the_empty_list = alloc_object();
+    the_empty_list->type = THE_EMPTY_LIST;
+
     false = alloc_object();
     false->type = BOOLEAN;
     false->data.boolean.value = 0;
@@ -134,6 +143,18 @@ char peek(FILE *in) {
     c = getc(in);
     ungetc(c, in);
     return c;
+}
+
+void eat_whitespace(FILE *in) {
+    char c;
+    
+    while ((c = getc(in)) != EOF) {
+        if (isspace(c)) {
+            continue;
+        }
+        ungetc(c, in);
+        break;
+    }
 }
 
 void eat_expected_string(FILE *in, char *str) {
@@ -259,6 +280,18 @@ object *read(FILE *in) {
             buffer[i] = '\0';
             return make_string(buffer);
         }
+        if (c == '(') {
+            eat_whitespace(in);
+            c = getc(in);
+            if (c == ')') {
+                return the_empty_list;
+            }
+            else {
+                fprintf(stderr, "unexpected character '%c'. "
+                                "Expecting ')'\n", c);
+                exit(1);
+            }
+        }
         else {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
             exit(1);
@@ -282,6 +315,9 @@ void write(object *obj) {
     char *str;
     
     switch (obj->type) {
+        case THE_EMPTY_LIST:
+            printf("()");
+            break;
         case BOOLEAN:
             printf("#%c", is_false(obj) ? 'f' : 't');
             break;
