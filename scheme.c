@@ -280,7 +280,7 @@ object *read(FILE *in) {
             buffer[i] = '\0';
             return make_string(buffer);
         }
-        if (c == '(') {
+        if (c == '(') { /* read the empty list */
             eat_whitespace(in);
             c = getc(in);
             if (c == ')') {
