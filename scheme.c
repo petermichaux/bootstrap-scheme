@@ -133,7 +133,7 @@ void write(object *obj) {
 
 int main(void) {
 
-    printf("Welcome to your Scheme REPL. "
+    printf("Welcome to Bootstrap Scheme. "
            "Use ctrl-c to exit.\n");
 
     while(1) {
