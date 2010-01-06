@@ -144,19 +144,9 @@ object *read(FILE *in) {
 
 /*************************** EVALUATE ****************************/
 
-char is_self_evaluating(object *exp) {
-    return is_boolean(exp) ||
-           is_fixnum(exp);
-}
-
+/* until we have lists and symbols just echo */
 object *eval(object *exp) {
-    if (is_self_evaluating(exp)) {
-        return exp;
-    }
-    else {
-        fprintf(stderr, "cannot eval unknown expression type\n");
-        exit(1);
-    }
+    return exp;
 }
 
 /**************************** PRINT ******************************/
