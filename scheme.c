@@ -136,7 +136,7 @@ int main(void) {
     printf("Welcome to Bootstrap Scheme. "
            "Use ctrl-c to exit.\n");
 
-    while(1) {
+    while (1) {
         printf("> ");
         write(eval(read(stdin)));
         printf("\n");
