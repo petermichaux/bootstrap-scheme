@@ -113,7 +113,13 @@ char is_self_evaluating(object *exp) {
 }
 
 object *eval(object *exp) {
-    return exp;
+    if (is_self_evaluating(exp)) {
+        return exp;
+    }
+    else {
+        fprintf(stderr, "cannot eval unknown expression type\n");
+        exit(1);
+    }
 }
 
 /**************************** PRINT ******************************/
