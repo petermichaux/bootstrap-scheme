@@ -21,6 +21,8 @@ Welcome to your Scheme REPL. Use ctrl-c to exit.
 -123
 > #\c
 #\c
+> "adsf"
+"asdf"
 > ^C
 $
 
