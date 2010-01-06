@@ -23,11 +23,14 @@
 
 /**************************** MODEL ******************************/
 
-typedef enum {FIXNUM} object_type;
+typedef enum {BOOLEAN, FIXNUM} object_type;
 
 typedef struct object {
     object_type type;
     union {
+        struct {
+            char value;
+        } boolean;
         struct {
             long value;
         } fixnum;
@@ -46,6 +49,17 @@ object *alloc_object(void) {
     return obj;
 }
 
+object *false;
+object *true;
+
+char is_boolean(object *obj) {
+    return obj->type == BOOLEAN;
+}
+
+char is_false(object *obj) {
+    return obj == false;
+}
+
 object *make_fixnum(long value) {
     object *obj;
 
@@ -57,6 +71,16 @@ object *make_fixnum(long value) {
 
 char is_fixnum(object *obj) {
     return obj->type == FIXNUM;
+}
+
+void init(void) {
+    false = alloc_object();
+    false->type = BOOLEAN;
+    false->data.boolean.value = 0;
+
+    true = alloc_object();
+    true->type = BOOLEAN;
+    true->data.boolean.value = 1;
 }
 
 /***************************** READ ******************************/
@@ -75,6 +99,18 @@ object *read(FILE *in) {
     while ((c = getc(in)) != EOF) {
         if (isspace(c)) {
             continue;
+        }
+        else if (c == '#') { /* read a boolean */
+            c = getc(in);
+            switch (c) {
+                case 't':
+                    return true;
+                case 'f':
+                    return false;
+                default:
+                    fprintf(stderr, "unknown boolean literal\n");
+                    exit(1);
+            }
         }
         else if (isdigit(c) || c == '-') { /* read a fixnum */
             if (c == '-') {
@@ -109,7 +145,8 @@ object *read(FILE *in) {
 /*************************** EVALUATE ****************************/
 
 char is_self_evaluating(object *exp) {
-    return is_fixnum(exp);
+    return is_boolean(exp) ||
+           is_fixnum(exp);
 }
 
 object *eval(object *exp) {
@@ -120,6 +157,9 @@ object *eval(object *exp) {
 
 void write(object *obj) {
     switch (obj->type) {
+        case BOOLEAN:
+            printf("#%c", is_false(obj) ? 'f' : 't');
+            break;
         case FIXNUM:
             printf("%ld", obj->data.fixnum.value);
             break;
@@ -136,6 +176,8 @@ int main(void) {
     printf("Welcome to your Scheme REPL. "
            "Use ctrl-c to exit.\n");
 
+    init();
+
     while(1) {
         printf("> ");
         write(eval(read(stdin)));
@@ -149,6 +191,6 @@ int main(void) {
 
 Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
-Priestess, Puscifer
+Priestess, Puscifer, Bob Dylan
 
 */
