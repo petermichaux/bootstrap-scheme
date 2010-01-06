@@ -29,10 +29,12 @@ Welcome to your Scheme REPL. Use ctrl-c to exit.
 (0 . 1)
 > (0 1 2 3)
 (0 1 2 3)
+> asdf
+asdf
 > ^C
 $
 
-Note that the empty list, pair and list examples above would error in a completed Scheme interpreter. For the time being this REPL is a pretty printer until symbols are added.
+Note that the empty list, pair, list and symbol examples above would error in a completed Scheme interpreter. This REPL is a pretty printer until the next version when quote is added to the evaluator.
 
 ----
 
