@@ -23,7 +23,7 @@
 
 /**************************** MODEL ******************************/
 
-typedef enum {BOOLEAN, FIXNUM, CHARACTER} object_type;
+typedef enum {BOOLEAN, FIXNUM, CHARACTER, STRING} object_type;
 
 typedef struct object {
     object_type type;
@@ -37,6 +37,9 @@ typedef struct object {
         struct {
             char value;
         } character;
+        struct {
+            char *value;
+        } string;
     } data;
 } object;
 
@@ -87,6 +90,24 @@ object *make_character(char value) {
 
 char is_character(object *obj) {
     return obj->type == CHARACTER;
+}
+
+object *make_string(char *value) {
+    object *obj;
+
+    obj = alloc_object();
+    obj->type = STRING;
+    obj->data.string.value = malloc(strlen(value) + 1);
+    if (obj->data.string.value == NULL) {
+        fprintf(stderr, "out of memory\n");
+        exit(1);
+    }
+    strcpy(obj->data.string.value, value);
+    return obj;
+}
+
+char is_string(object *obj) {
+    return obj->type == STRING;
 }
 
 void init(void) {
@@ -165,7 +186,10 @@ object *read_character(FILE *in) {
 object *read(FILE *in) {
     char c;
     short sign = 1;
+    int i;
     long num = 0;
+#define BUFFER_MAX 1000
+    char buffer[BUFFER_MAX];
 
     while ((c = getc(in)) != EOF) {
         if (isspace(c)) {
@@ -207,6 +231,34 @@ object *read(FILE *in) {
                 exit(1);
             }
         }
+        else if (c == '"') { /* read a string */
+            i = 0;
+            while ((c = getc(in)) != '"') {
+                if (c == '\\') {
+                    c = getc(in);
+                    if (c == 'n') {
+                        c = '\n';
+                    }
+                }
+                if (c == EOF) {
+                    fprintf(stderr,
+                            "non-terminated string literal\n");
+                    exit(1);
+                }
+                /* subtract 1 to save space for '\0' terminator */
+                if (i < BUFFER_MAX - 1) {
+                    buffer[i++] = c;
+                }
+                else {
+                    fprintf(stderr, 
+                         "string too long. Maximum length is %d\n",
+                         BUFFER_MAX);
+                    exit(1);
+                }
+            }
+            buffer[i] = '\0';
+            return make_string(buffer);
+        }
         else {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
             exit(1);
@@ -219,9 +271,10 @@ object *read(FILE *in) {
 /*************************** EVALUATE ****************************/
 
 char is_self_evaluating(object *exp) {
-    return is_boolean(exp)  ||
-           is_fixnum(exp)   ||
-           is_character(exp);
+    return is_boolean(exp)   ||
+           is_fixnum(exp)    ||
+           is_character(exp) ||
+           is_string(exp);
 }
 
 object *eval(object *exp) {
@@ -238,6 +291,7 @@ object *eval(object *exp) {
 
 void write(object *obj) {
     char c;
+    char *str;
     
     switch (obj->type) {
         case BOOLEAN:
@@ -259,6 +313,27 @@ void write(object *obj) {
                 default:
                     putchar(c);
             }
+            break;
+        case STRING:
+            str = obj->data.string.value;
+            putchar('"');
+            while (*str != '\0') {
+                switch (*str) {
+                    case '\n':
+                        printf("\\n");
+                        break;
+                    case '\\':
+                        printf("\\\\");
+                        break;
+                    case '"':
+                        printf("\\\"");
+                        break;
+                    default:
+                        putchar(*str);
+                }
+                str++;
+            }
+            putchar('"');
             break;
         default:
             fprintf(stderr, "cannot write unknown type\n");
@@ -288,6 +363,7 @@ int main(void) {
 
 Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
-Priestess, Puscifer, Bob Dylan, Them Crooked Vultures
+Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
+Black Sabbath
 
 */
