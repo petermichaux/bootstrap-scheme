@@ -1,11 +1,11 @@
-0.4 - January 8, 2006 - Peter Michaux
+0.4 - January 8, 2010 - Peter Michaux
   - add strings
 
-0.3 - January 7, 2006 - Peter Michaux
+0.3 - January 7, 2010 - Peter Michaux
   - add characters
 
-0.2 - January 6, 2006 - Peter Michaux
+0.2 - January 6, 2010 - Peter Michaux
   - add booleans
 
-0.1 - January 5, 2006 - Peter Michaux
+0.1 - January 5, 2010 - Peter Michaux
   - Initial REPL with integers
