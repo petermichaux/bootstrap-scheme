@@ -23,8 +23,12 @@ Welcome to your Scheme REPL. Use ctrl-c to exit.
 #\c
 > "adsf"
 "asdf"
+> ()
+()
 > ^C
 $
+
+Note that the empty list example above would error in a completed Scheme interpreter. For the time being this REPL is a pretty printer until lists and symbols are added.
 
 ----
 
