@@ -130,8 +130,7 @@ void eat_expected_string(FILE *in, char *str) {
 
 void peek_expected_delimiter(FILE *in) {
     if (!is_delimiter(peek(in))) {
-        fprintf(stderr,
-              "character not followed by delimiter\n");
+        fprintf(stderr, "character not followed by delimiter\n");
         exit(1);
     }
 }
