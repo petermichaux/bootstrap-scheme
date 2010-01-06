@@ -1,0 +1,35 @@
+Bootstrap Scheme is a quick and very dirty Scheme interpreter. Its *only* intended use is to compile a self-compiling Scheme-to-Assembly or Scheme-to-C compiler the first time.
+
+Bootstrap Scheme doesn't have many features a Scheme system usually has. It doesn't have numbers other than integers. It doesn't have vectors. It definitely doesn't have a module system, call/cc, macros, dynamic-wind or any other advanced Scheme features.
+
+Bootstrap Scheme is slow. The implementation is an abstract syntax tree node walker with no optimizations. There is no point in making a node walking interpreter any better than the absolute base necessity as the fundamental design of a node walker would never be used in production. Small, easy to read source code is far more important than anything else.
+
+Bootstrap Scheme revels in the opportunity to be very dirty Scheme.
+
+----
+
+Example build and use.
+
+$ cd bootstrap
+$ make
+cc -Wall -ansi -o scheme scheme.c
+$ ./scheme
+Welcome to your Scheme REPL. Use ctrl-c to exit.
+> 123
+123
+> -123
+-123
+> 007
+7
+> ^C
+$
+
+----
+
+For more information see:
+
+  http://peter.michaux.ca/articles/scheme-from-scratch-introduction
+
+----
+
+See the LICENSE file for legal information.
