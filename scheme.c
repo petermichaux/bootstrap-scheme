@@ -23,7 +23,7 @@
 
 /**************************** MODEL ******************************/
 
-typedef enum {BOOLEAN, FIXNUM} object_type;
+typedef enum {BOOLEAN, FIXNUM, CHARACTER} object_type;
 
 typedef struct object {
     object_type type;
@@ -34,6 +34,9 @@ typedef struct object {
         struct {
             long value;
         } fixnum;
+        struct {
+            char value;
+        } character;
     } data;
 } object;
 
@@ -73,6 +76,19 @@ char is_fixnum(object *obj) {
     return obj->type == FIXNUM;
 }
 
+object *make_character(char value) {
+    object *obj;
+
+    obj = alloc_object();
+    obj->type = CHARACTER;
+    obj->data.character.value = value;
+    return obj;
+}
+
+char is_character(object *obj) {
+    return obj->type == CHARACTER;
+}
+
 void init(void) {
     false = alloc_object();
     false->type = BOOLEAN;
@@ -91,6 +107,62 @@ char is_delimiter(char c) {
            c == '"';
 }
 
+char peek(FILE *in) {
+    char c;
+
+    c = getc(in);
+    ungetc(c, in);
+    return c;
+}
+
+void eat_expected_string(FILE *in, char *str) {
+    char c;
+
+    while (*str != '\0') {
+        c = getc(in);
+        if (c != *str) {
+            fprintf(stderr, "unexpected character '%c'\n", c);
+            exit(1);
+        }
+        str++;
+    }
+}
+
+void peek_expected_delimiter(FILE *in) {
+    if (!is_delimiter(peek(in))) {
+        fprintf(stderr,
+              "character not followed by delimiter\n");
+        exit(1);
+    }
+}
+
+object *read_character(FILE *in) {
+    char c;
+
+    c = getc(in);
+    switch (c) {
+        case EOF:
+            fprintf(stderr, "incomplete character literal\n");
+            exit(1);
+        case 's':
+            if (peek(in) == 'p') {
+                eat_expected_string(in, "pace");
+                peek_expected_delimiter(in);
+                return make_character(' ');
+            }
+            break;
+        case 'n':
+            if (peek(in) == 'e') {
+                eat_expected_string(in, "ewline");
+                peek_expected_delimiter(in);
+                return make_character('\n');
+            }
+            break;
+    }
+    peek_expected_delimiter(in);
+    return make_character(c);
+}
+
 object *read(FILE *in) {
     char c;
     short sign = 1;
@@ -100,15 +172,18 @@ object *read(FILE *in) {
         if (isspace(c)) {
             continue;
         }
-        else if (c == '#') { /* read a boolean */
+        else if (c == '#') { /* read a boolean or character */
             c = getc(in);
             switch (c) {
                 case 't':
                     return true;
                 case 'f':
                     return false;
+                case '\\':
+                    return read_character(in);
                 default:
-                    fprintf(stderr, "unknown boolean literal\n");
+                    fprintf(stderr,
+                         "unknown boolean or character literal\n");
                     exit(1);
             }
         }
@@ -145,23 +220,46 @@ object *read(FILE *in) {
 /*************************** EVALUATE ****************************/
 
 char is_self_evaluating(object *exp) {
-    return is_boolean(exp) ||
-           is_fixnum(exp);
+    return is_boolean(exp)  ||
+           is_fixnum(exp)   ||
+           is_character(exp);
 }
 
 object *eval(object *exp) {
-    return exp;
+    if (is_self_evaluating(exp)) {
+        return exp;
+    }
+    else {
+        fprintf(stderr, "cannot eval unknown expression type\n");
+        exit(1);
+    }
 }
 
 /**************************** PRINT ******************************/
 
 void write(object *obj) {
+    char c;
+    
     switch (obj->type) {
         case BOOLEAN:
             printf("#%c", is_false(obj) ? 'f' : 't');
             break;
         case FIXNUM:
             printf("%ld", obj->data.fixnum.value);
+            break;
+        case CHARACTER:
+            c = obj->data.character.value;
+            printf("#\\");
+            switch (c) {
+                case '\n':
+                    printf("newline");
+                    break;
+                case ' ':
+                    printf("space");
+                    break;
+                default:
+                    putchar(c);
+            }
             break;
         default:
             fprintf(stderr, "cannot write unknown type\n");
@@ -191,6 +289,6 @@ int main(void) {
 
 Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
-Priestess, Puscifer, Bob Dylan
+Priestess, Puscifer, Bob Dylan, Them Crooked Vultures
 
 */

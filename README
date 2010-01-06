@@ -15,12 +15,12 @@ $ make
 cc -Wall -ansi -o scheme scheme.c
 $ ./scheme
 Welcome to your Scheme REPL. Use ctrl-c to exit.
-> 123
-123
+> #t
+#t
 > -123
 -123
-> 007
-7
+> #\c
+#\c
 > ^C
 $
 
