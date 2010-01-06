@@ -24,7 +24,7 @@
 /**************************** MODEL ******************************/
 
 typedef enum {THE_EMPTY_LIST, BOOLEAN, FIXNUM,
-              CHARACTER, STRING} object_type;
+              CHARACTER, STRING, PAIR} object_type;
 
 typedef struct object {
     object_type type;
@@ -41,6 +41,10 @@ typedef struct object {
         struct {
             char *value;
         } string;
+        struct {
+            struct object *car;
+            struct object *cdr;
+        } pair;
     } data;
 } object;
 
@@ -115,6 +119,65 @@ object *make_string(char *value) {
 char is_string(object *obj) {
     return obj->type == STRING;
 }
+
+object *cons(object *car, object *cdr) {
+    object *obj;
+    
+    obj = alloc_object();
+    obj->type = PAIR;
+    obj->data.pair.car = car;
+    obj->data.pair.cdr = cdr;
+    return obj;
+}
+
+char is_pair(object *obj) {
+    return obj->type == PAIR;
+}
+
+object *car(object *pair) {
+    return pair->data.pair.car;
+}
+
+void set_car(object *obj, object* value) {
+    obj->data.pair.car = value;
+}
+
+object *cdr(object *pair) {
+    return pair->data.pair.cdr;
+}
+
+void set_cdr(object *obj, object* value) {
+    obj->data.pair.cdr = value;
+}
+
+#define caar(obj)   car(car(obj))
+#define cadr(obj)   car(cdr(obj))
+#define cdar(obj)   cdr(car(obj))
+#define cddr(obj)   cdr(cdr(obj))
+#define caaar(obj)  car(car(car(obj)))
+#define caadr(obj)  car(car(cdr(obj)))
+#define cadar(obj)  car(cdr(car(obj)))
+#define caddr(obj)  car(cdr(cdr(obj)))
+#define cdaar(obj)  cdr(car(car(obj)))
+#define cdadr(obj)  cdr(car(cdr(obj)))
+#define cddar(obj)  cdr(cdr(car(obj)))
+#define cdddr(obj)  cdr(cdr(cdr(obj)))
+#define caaaar(obj) car(car(car(car(obj))))
+#define caaadr(obj) car(car(car(cdr(obj))))
+#define caadar(obj) car(car(cdr(car(obj))))
+#define caaddr(obj) car(car(cdr(cdr(obj))))
+#define cadaar(obj) car(cdr(car(car(obj))))
+#define cadadr(obj) car(cdr(car(cdr(obj))))
+#define caddar(obj) car(cdr(cdr(car(obj))))
+#define cadddr(obj) car(cdr(cdr(cdr(obj))))
+#define cdaaar(obj) cdr(car(car(car(obj))))
+#define cdaadr(obj) cdr(car(car(cdr(obj))))
+#define cdadar(obj) cdr(car(cdr(car(obj))))
+#define cdaddr(obj) cdr(car(cdr(cdr(obj))))
+#define cddaar(obj) cdr(cdr(car(car(obj))))
+#define cddadr(obj) cdr(cdr(car(cdr(obj))))
+#define cdddar(obj) cdr(cdr(cdr(car(obj))))
+#define cddddr(obj) cdr(cdr(cdr(cdr(obj))))
 
 void init(void) {
     the_empty_list = alloc_object();
@@ -204,6 +267,48 @@ object *read_character(FILE *in) {
     return make_character(c);
 }
 
+object *read(FILE *in);
+
+object *read_pair(FILE *in) {
+    char c;
+    object *car_obj;
+    object *cdr_obj;
+    
+    eat_whitespace(in);
+    
+    c = getc(in);
+    if (c == ')') { /* read the empty list */
+        return the_empty_list;
+    }
+    ungetc(c, in);
+
+    car_obj = read(in);
+
+    eat_whitespace(in);
+    
+    c = getc(in);    
+    if (c == '.') { /* read improper list */
+        c = peek(in);
+        if (!isspace(c)) {
+            fprintf(stderr, "dot not followed by whitespace\n");
+            exit(-1);
+        }
+        cdr_obj = read(in);
+        eat_whitespace(in);
+        c = getc(in);
+        if (c != ')') {
+            fprintf(stderr, "where was the trailing right paren?\n");
+            exit(1);
+        }
+        return cons(car_obj, cdr_obj);
+    }
+    else { /* read list */
+        ungetc(c, in);
+        cdr_obj = read_pair(in);        
+        return cons(car_obj, cdr_obj);
+    }
+}
+
 object *read(FILE *in) {
     char c;
     short sign = 1;
@@ -280,17 +385,8 @@ object *read(FILE *in) {
             buffer[i] = '\0';
             return make_string(buffer);
         }
-        if (c == '(') {
-            eat_whitespace(in);
-            c = getc(in);
-            if (c == ')') {
-                return the_empty_list;
-            }
-            else {
-                fprintf(stderr, "unexpected character '%c'. "
-                                "Expecting ')'\n", c);
-                exit(1);
-            }
+        if (c == '(') { /* read the empty list or pair */
+            return read_pair(in);
         }
         else {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
@@ -309,6 +405,28 @@ object *eval(object *exp) {
 }
 
 /**************************** PRINT ******************************/
+
+void write(object *obj);
+
+void write_pair(object *pair) {
+    object *car_obj;
+    object *cdr_obj;
+    
+    car_obj = car(pair);
+    cdr_obj = cdr(pair);
+    write(car_obj);
+    if (cdr_obj->type == PAIR) {
+        printf(" ");
+        write_pair(cdr_obj);
+    }
+    else if (cdr_obj->type == THE_EMPTY_LIST) {
+        return;
+    }
+    else {
+        printf(" . ");
+        write(cdr_obj);
+    }
+}
 
 void write(object *obj) {
     char c;
@@ -359,6 +477,11 @@ void write(object *obj) {
             }
             putchar('"');
             break;
+        case PAIR:
+            printf("(");
+            write_pair(obj);
+            printf(")");
+            break;
         default:
             fprintf(stderr, "cannot write unknown type\n");
             exit(1);
@@ -388,6 +511,6 @@ int main(void) {
 Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
-Black Sabbath
+Black Sabbath, Pantera, Tool
 
 */
