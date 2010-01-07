@@ -23,7 +23,7 @@
 
 /**************************** MODEL ******************************/
 
-typedef enum {THE_EMPTY_LIST, BOOLEAN, FIXNUM,
+typedef enum {THE_EMPTY_LIST, BOOLEAN, SYMBOL, FIXNUM,
               CHARACTER, STRING, PAIR} object_type;
 
 typedef struct object {
@@ -32,6 +32,9 @@ typedef struct object {
         struct {
             char value;
         } boolean;
+        struct {
+            char *value;
+        } symbol;
         struct {
             long value;
         } fixnum;
@@ -63,6 +66,11 @@ object *alloc_object(void) {
 object *the_empty_list;
 object *false;
 object *true;
+object *symbol_table;
+
+object *cons(object *car, object *cdr);
+object *car(object *pair);
+object *cdr(object *pair);
 
 char is_the_empty_list(object *obj) {
     return obj == the_empty_list;
@@ -74,6 +82,36 @@ char is_boolean(object *obj) {
 
 char is_false(object *obj) {
     return obj == false;
+}
+
+object *make_symbol(char *value) {
+    object *obj;
+    object *element;
+    
+    /* search for they symbol in the symbol table */
+    element = symbol_table;
+    while (!is_the_empty_list(element)) {
+        if (strcmp(car(element)->data.symbol.value, value) == 0) {
+            return car(element);
+        }
+        element = cdr(element);
+    };
+    
+    /* create the symbol and add it to the symbol table */
+    obj = alloc_object();
+    obj->type = SYMBOL;
+    obj->data.symbol.value = malloc(strlen(value) + 1);
+    if (obj->data.symbol.value == NULL) {
+        fprintf(stderr, "out of memory\n");
+        exit(1);
+    }
+    strcpy(obj->data.symbol.value, value);
+    symbol_table = cons(obj, symbol_table);
+    return obj;
+}
+
+char is_symbol(object *obj) {
+    return obj->type == SYMBOL;
 }
 
 object *make_fixnum(long value) {
@@ -190,6 +228,8 @@ void init(void) {
     true = alloc_object();
     true->type = BOOLEAN;
     true->data.boolean.value = 1;
+    
+    symbol_table = the_empty_list;
 }
 
 /***************************** READ ******************************/
@@ -198,6 +238,11 @@ char is_delimiter(char c) {
     return isspace(c) || c == EOF ||
            c == '('   || c == ')' ||
            c == '"';
+}
+
+char is_initial(char c) {
+    return isalpha(c) || c == '*' || c == '/' || c == '>' ||
+             c == '<' || c == '=' || c == '?' || c == '!';
 }
 
 char peek(FILE *in) {
@@ -336,7 +381,8 @@ object *read(FILE *in) {
                     exit(1);
             }
         }
-        else if (isdigit(c) || c == '-') { /* read a fixnum */
+        else if (isdigit(c) || (c == '-' && (isdigit(peek(in))))) {
+            /* read a fixnum */
             if (c == '-') {
                 sign = -1;
             }
@@ -354,6 +400,33 @@ object *read(FILE *in) {
             else {
                 fprintf(stderr,
                         "number not followed by delimiter\n");
+                exit(1);
+            }
+        }
+        else if (is_initial(c) ||
+                 ((c == '+' || c == '-') &&
+                  is_delimiter(peek(in)))) { /* read a symbol */
+            i = 0;
+            while (is_initial(c) || isdigit(c) ||
+                   c == '+' || c == '-') {
+                /* subtract 1 to save space for '\0' terminator */
+                if (i < BUFFER_MAX - 1) {
+                    buffer[i++] = c;
+                }
+                else {
+                    fprintf(stderr, "symbol too long. Maximum length is %d\n", BUFFER_MAX);
+                    exit(1);
+                }
+                c = getc(in);
+            }
+            if (is_delimiter(c)) {
+                buffer[i] = '\0';
+                ungetc(c, in);
+                return make_symbol(buffer);
+            }
+            else {
+                fprintf(stderr, "symbol not followed by delimiter. "
+                                " Found '%c'\n", c);
                 exit(1);
             }
         }
@@ -438,6 +511,9 @@ void write(object *obj) {
             break;
         case BOOLEAN:
             printf("#%c", is_false(obj) ? 'f' : 't');
+            break;
+        case SYMBOL:
+            printf("%s", obj->data.symbol.value);
             break;
         case FIXNUM:
             printf("%ld", obj->data.fixnum.value);
