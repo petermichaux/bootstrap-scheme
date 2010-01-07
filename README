@@ -23,18 +23,16 @@ Welcome to your Scheme REPL. Use ctrl-c to exit.
 #\c
 > "adsf"
 "asdf"
-> ()
+> (quote ())
 ()
-> (0 . 1)
+> (quote (0 . 1))
 (0 . 1)
-> (0 1 2 3)
+> (quote (0 1 2 3))
 (0 1 2 3)
-> asdf
+> (quote asdf)
 asdf
 > ^C
 $
-
-Note that the empty list, pair, list and symbol examples above would error in a completed Scheme interpreter. This REPL is a pretty printer until the next version when quote is added to the evaluator.
 
 ----
 

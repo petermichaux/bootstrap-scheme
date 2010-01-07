@@ -472,9 +472,43 @@ object *read(FILE *in) {
 
 /*************************** EVALUATE ****************************/
 
-/* until we have lists and symbols just echo */
+char is_self_evaluating(object *exp) {
+    return is_boolean(exp)   ||
+           is_fixnum(exp)    ||
+           is_character(exp) ||
+           is_string(exp);
+}
+
+char is_tagged_list(object *expression, char *tag) {
+    object *the_car;
+
+    if (is_pair(expression)) {
+        the_car = car(expression);
+        return is_symbol(the_car) && 
+               (strcmp(the_car->data.symbol.value, tag) == 0);
+    }
+    return 0;
+}
+
+char is_quoted(object *expression) {
+    return is_tagged_list(expression, "quote");
+}
+
+object *text_of_quotation(object *exp) {
+    return cadr(exp);
+}
+
 object *eval(object *exp) {
-    return exp;
+    if (is_self_evaluating(exp)) {
+        return exp;
+    }
+    else if (is_quoted(exp)) {
+        return text_of_quotation(exp);
+    }
+    else {
+        fprintf(stderr, "cannot eval unknown expression type\n");
+        exit(1);
+    }
 }
 
 /**************************** PRINT ******************************/
@@ -587,6 +621,6 @@ int main(void) {
 Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
-Black Sabbath, Pantera, Tool
+Black Sabbath, Pantera, Tool, ZZ Top
 
 */
