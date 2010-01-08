@@ -85,7 +85,7 @@ void init(void) {
 
 /***************************** READ ******************************/
 
-char is_delimiter(char c) {
+char is_delimiter(int c) {
     return isspace(c) || c == EOF ||
            c == '('   || c == ')' ||
            c == '"';
