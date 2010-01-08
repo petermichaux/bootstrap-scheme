@@ -297,7 +297,8 @@ object *read_pair(FILE *in) {
         eat_whitespace(in);
         c = getc(in);
         if (c != ')') {
-            fprintf(stderr, "where was the trailing right paren?\n");
+            fprintf(stderr,
+                    "where was the trailing right paren?\n");
             exit(1);
         }
         return cons(car_obj, cdr_obj);
