@@ -92,7 +92,7 @@ char is_delimiter(char c) {
 }
 
 object *read(FILE *in) {
-    char c;
+    int c;
     short sign = 1;
     long num = 0;
 
