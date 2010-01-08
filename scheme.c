@@ -122,14 +122,14 @@ void init(void) {
 
 /***************************** READ ******************************/
 
-char is_delimiter(char c) {
+char is_delimiter(int c) {
     return isspace(c) || c == EOF ||
            c == '('   || c == ')' ||
            c == '"';
 }
 
-char peek(FILE *in) {
-    char c;
+int peek(FILE *in) {
+    int c;
 
     c = getc(in);
     ungetc(c, in);
@@ -137,7 +137,7 @@ char peek(FILE *in) {
 }
 
 void eat_expected_string(FILE *in, char *str) {
-    char c;
+    int c;
 
     while (*str != '\0') {
         c = getc(in);
@@ -157,7 +157,7 @@ void peek_expected_delimiter(FILE *in) {
 }
 
 object *read_character(FILE *in) {
-    char c;
+    int c;
 
     c = getc(in);
     switch (c) {
@@ -184,7 +184,7 @@ object *read_character(FILE *in) {
 }
 
 object *read(FILE *in) {
-    char c;
+    int c;
     short sign = 1;
     int i;
     long num = 0;
