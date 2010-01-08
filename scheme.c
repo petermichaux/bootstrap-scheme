@@ -61,7 +61,7 @@ char is_fixnum(object *obj) {
 
 /***************************** READ ******************************/
 
-char is_delimiter(char c) {
+char is_delimiter(int c) {
     return isspace(c) || c == EOF ||
            c == '('   || c == ')' ||
            c == '"';
