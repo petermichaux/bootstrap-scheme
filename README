@@ -31,6 +31,14 @@ Welcome to your Scheme REPL. Use ctrl-c to exit.
 (0 1 2 3)
 > (quote asdf)
 asdf
+> (define a 1)
+ok
+> a
+1
+> (set! a 2)
+ok
+> a
+2
 > ^C
 $
 

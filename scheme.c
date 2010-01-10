@@ -68,6 +68,10 @@ object *false;
 object *true;
 object *symbol_table;
 object *quote_symbol;
+object *define_symbol;
+object *set_symbol;
+object *ok_symbol;
+object *the_empty_environment;
 
 object *cons(object *car, object *cdr);
 object *car(object *pair);
@@ -218,6 +222,108 @@ void set_cdr(object *obj, object* value) {
 #define cdddar(obj) cdr(cdr(cdr(car(obj))))
 #define cddddr(obj) cdr(cdr(cdr(cdr(obj))))
 
+object *enclosing_environment(object *env) {
+    return cdr(env);
+}
+
+object *first_frame(object *env) {
+    return car(env);
+}
+
+object *make_frame(object *variables, object *values) {
+    return cons(variables, values);
+}
+
+object *frame_variables(object *frame) {
+    return car(frame);
+}
+
+object *frame_values(object *frame) {
+    return cdr(frame);
+}
+
+void add_binding_to_frame(object *var, object *val, object *frame) {
+    set_car(frame, cons(var, car(frame)));
+    set_cdr(frame, cons(val, cdr(frame)));
+}
+
+object *extend_environment(object *vars, object *vals, object *base_env) {
+    return cons(make_frame(vars, vals), base_env);
+}
+
+object *lookup_variable_value(object *var, object *env) {
+    object *frame;
+    object *vars;
+    object *vals;
+    while (!is_the_empty_list(env)) {
+        frame = first_frame(env);
+        vars = frame_variables(frame);
+        vals = frame_values(frame);
+        while (!is_the_empty_list(vars)) {
+            if (var == car(vars)) {
+                return car(vals);
+            }
+            vars = cdr(vars);
+            vals = cdr(vals);
+        }
+        env = enclosing_environment(env);
+    }
+    fprintf(stderr, "Unbound variable.\n");
+    exit(13);
+}
+
+void set_variable_value(object *var, object *val, object *env) {
+    object *frame;
+    object *vars;
+    object *vals;
+
+    while (!is_the_empty_list(env)) {
+        frame = first_frame(env);
+        vars = frame_variables(frame);
+        vals = frame_values(frame);
+        while (!is_the_empty_list(vars)) {
+            if (var == car(vars)) {
+                set_car(vals, val);
+                return;
+            }
+            vars = cdr(vars);
+            vals = cdr(vals);
+        }
+        env = enclosing_environment(env);
+    }
+    fprintf(stderr, "unbound variable");
+    exit(1);
+}
+
+void define_variable(object *var, object *val, object *env) {
+    object *frame;
+    object *vars;
+    object *vals;
+    
+    frame = first_frame(env);    
+    vars = frame_variables(frame);
+    vals = frame_values(frame);
+
+    while (!is_the_empty_list(vars)) {
+        if (var == car(vars)) {
+            set_car(vals, val);
+        }
+        vars = cdr(vars);
+        vals = cdr(vals);
+    }
+    add_binding_to_frame(var, val, frame);
+}
+
+object *setup_environment(void) {
+    object *initial_env;
+    
+    initial_env = extend_environment(
+                      the_empty_list,
+                      the_empty_list,
+                      the_empty_environment);
+    return initial_env;
+}
+
 void init(void) {
     the_empty_list = alloc_object();
     the_empty_list->type = THE_EMPTY_LIST;
@@ -232,6 +338,11 @@ void init(void) {
     
     symbol_table = the_empty_list;
     quote_symbol = make_symbol("quote");
+    define_symbol = make_symbol("define");
+    set_symbol = make_symbol("set!");
+    ok_symbol = make_symbol("ok");
+    
+    the_empty_environment = the_empty_list;
 }
 
 /***************************** READ ******************************/
@@ -484,6 +595,10 @@ char is_self_evaluating(object *exp) {
            is_string(exp);
 }
 
+char is_variable(object *expression) {
+    return is_symbol(expression);
+}
+
 char is_tagged_list(object *expression, object *tag) {
     object *the_car;
 
@@ -502,12 +617,57 @@ object *text_of_quotation(object *exp) {
     return cadr(exp);
 }
 
-object *eval(object *exp) {
+char is_assignment(object *exp) {
+    return is_tagged_list(exp, set_symbol);
+}
+
+object *assignment_variable(object *exp) {
+    return car(cdr(exp));
+}
+
+object *assignment_value(object *exp) {
+    return car(cdr(cdr(exp)));
+}
+
+char is_definition(object *exp) {
+    return is_tagged_list(exp, define_symbol);
+}
+
+object *definition_variable(object *exp) {
+    return cadr(exp);
+}
+
+object *definition_value(object *exp) {
+    return caddr(exp);
+}
+
+object *eval(object *exp, object *env);
+
+object *eval_assignment(object *exp, object *env) {
+    set_variable_value(assignment_variable(exp), eval(assignment_value(exp), env), env);
+    return ok_symbol;
+}
+
+object *eval_definition(object *exp, object *env) {
+    define_variable(definition_variable(exp), eval(definition_value(exp), env), env);
+    return ok_symbol;
+}
+
+object *eval(object *exp, object *env) {
     if (is_self_evaluating(exp)) {
         return exp;
     }
+    else if (is_variable(exp)) {
+        return lookup_variable_value(exp, env);
+    }
     else if (is_quoted(exp)) {
         return text_of_quotation(exp);
+    }
+    else if (is_assignment(exp)) {
+        return eval_assignment(exp, env);
+    }
+    else if (is_definition(exp)) {
+        return eval_definition(exp, env);
     }
     else {
         fprintf(stderr, "cannot eval unknown expression type\n");
@@ -605,15 +765,18 @@ void write(object *obj) {
 /***************************** REPL ******************************/
 
 int main(void) {
+    object *the_global_environment;
 
     printf("Welcome to Bootstrap Scheme. "
            "Use ctrl-c to exit.\n");
 
     init();
 
+    the_global_environment = setup_environment();
+
     while (1) {
         printf("> ");
-        write(eval(read(stdin)));
+        write(eval(read(stdin), the_global_environment));
         printf("\n");
     }
 
