@@ -1,3 +1,6 @@
+0.10 - January 14, 2010 - Peter Michaux
+  - add if form using tail call for consequent or alternative
+
 0.9 - January 13, 2010 - Peter Michaux
   - add environments, variables, definitions, and assignments
 

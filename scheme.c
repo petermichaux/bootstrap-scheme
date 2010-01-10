@@ -71,6 +71,7 @@ object *quote_symbol;
 object *define_symbol;
 object *set_symbol;
 object *ok_symbol;
+object *if_symbol;
 object *the_empty_environment;
 
 object *cons(object *car, object *cdr);
@@ -87,6 +88,10 @@ char is_boolean(object *obj) {
 
 char is_false(object *obj) {
     return obj == false;
+}
+
+char is_true(object *obj) {
+    return !is_false(obj);
 }
 
 object *make_symbol(char *value) {
@@ -341,6 +346,7 @@ void init(void) {
     define_symbol = make_symbol("define");
     set_symbol = make_symbol("set!");
     ok_symbol = make_symbol("ok");
+    if_symbol = make_symbol("if");
     
     the_empty_environment = the_empty_list;
 }
@@ -641,6 +647,30 @@ object *definition_value(object *exp) {
     return caddr(exp);
 }
 
+char is_if(object *expression) {
+    return is_tagged_list(expression, if_symbol);
+}
+
+object *if_predicate(object *exp) {
+    return cadr(exp);
+}
+
+object *if_consequent(object *exp) {
+    return caddr(exp);
+}
+
+object *if_alternative(object *exp) {
+    object *alt;
+    
+    alt = cadddr(exp);
+    if (is_the_empty_list(alt)) {
+        return false;
+    }
+    else {
+        return alt;
+    }
+}
+
 object *eval(object *exp, object *env);
 
 object *eval_assignment(object *exp, object *env) {
@@ -654,6 +684,8 @@ object *eval_definition(object *exp, object *env) {
 }
 
 object *eval(object *exp, object *env) {
+
+tailcall:
     if (is_self_evaluating(exp)) {
         return exp;
     }
@@ -668,6 +700,12 @@ object *eval(object *exp, object *env) {
     }
     else if (is_definition(exp)) {
         return eval_definition(exp, env);
+    }
+    if (is_if(exp)) {
+        exp = is_true(eval(if_predicate(exp), env)) ?
+                  if_consequent(exp) :
+                  if_alternative(exp);
+        goto tailcall;
     }
     else {
         fprintf(stderr, "cannot eval unknown expression type\n");
@@ -788,6 +826,6 @@ int main(void) {
 Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
-Black Sabbath, Pantera, Tool, ZZ Top
+Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age
 
 */
