@@ -67,6 +67,7 @@ object *the_empty_list;
 object *false;
 object *true;
 object *symbol_table;
+object *quote_symbol;
 
 object *cons(object *car, object *cdr);
 object *car(object *pair);
@@ -230,6 +231,7 @@ void init(void) {
     true->data.boolean.value = 1;
     
     symbol_table = the_empty_list;
+    quote_symbol = make_symbol("quote");
 }
 
 /***************************** READ ******************************/
@@ -458,8 +460,11 @@ object *read(FILE *in) {
             buffer[i] = '\0';
             return make_string(buffer);
         }
-        if (c == '(') { /* read the empty list or pair */
+        else if (c == '(') { /* read the empty list or pair */
             return read_pair(in);
+        }
+        else if (c == '\'') { /* read quoted expression */
+            return cons(quote_symbol, cons(read(in), the_empty_list));
         }
         else {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
@@ -479,19 +484,18 @@ char is_self_evaluating(object *exp) {
            is_string(exp);
 }
 
-char is_tagged_list(object *expression, char *tag) {
+char is_tagged_list(object *expression, object *tag) {
     object *the_car;
 
     if (is_pair(expression)) {
         the_car = car(expression);
-        return is_symbol(the_car) && 
-               (strcmp(the_car->data.symbol.value, tag) == 0);
+        return is_symbol(the_car) && (the_car == tag);
     }
     return 0;
 }
 
 char is_quoted(object *expression) {
-    return is_tagged_list(expression, "quote");
+    return is_tagged_list(expression, quote_symbol);
 }
 
 object *text_of_quotation(object *exp) {
