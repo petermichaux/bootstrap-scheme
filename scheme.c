@@ -788,6 +788,6 @@ int main(void) {
 Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
-Black Sabbath, Pantera, Tool, ZZ Top
+Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age
 
 */
