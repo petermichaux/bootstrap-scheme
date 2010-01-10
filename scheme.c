@@ -386,7 +386,7 @@ object *read(FILE *in) {
             buffer[i] = '\0';
             return make_string(buffer);
         }
-        if (c == '(') { /* read the empty list or pair */
+        else if (c == '(') { /* read the empty list or pair */
             return read_pair(in);
         }
         else {
