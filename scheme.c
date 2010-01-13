@@ -313,6 +313,7 @@ void define_variable(object *var, object *val, object *env) {
     while (!is_the_empty_list(vars)) {
         if (var == car(vars)) {
             set_car(vals, val);
+            return;
         }
         vars = cdr(vars);
         vals = cdr(vals);
