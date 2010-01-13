@@ -73,6 +73,7 @@ object *set_symbol;
 object *ok_symbol;
 object *if_symbol;
 object *the_empty_environment;
+object *the_global_environment;
 
 object *cons(object *car, object *cdr);
 object *car(object *pair);
@@ -349,6 +350,8 @@ void init(void) {
     if_symbol = make_symbol("if");
     
     the_empty_environment = the_empty_list;
+
+    the_global_environment = setup_environment();
 }
 
 /***************************** READ ******************************/
@@ -803,14 +806,11 @@ void write(object *obj) {
 /***************************** REPL ******************************/
 
 int main(void) {
-    object *the_global_environment;
 
     printf("Welcome to Bootstrap Scheme. "
            "Use ctrl-c to exit.\n");
 
     init();
-
-    the_global_environment = setup_environment();
 
     while (1) {
         printf("> ");
