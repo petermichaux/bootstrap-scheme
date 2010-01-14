@@ -804,6 +804,7 @@ void write(object *obj) {
 /***************************** REPL ******************************/
 
 int main(void) {
+
     printf("Welcome to Bootstrap Scheme. "
            "Use ctrl-c to exit.\n");
 
