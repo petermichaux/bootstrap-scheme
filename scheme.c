@@ -245,7 +245,7 @@ char is_primitive_proc(object *obj) {
     return obj->type == PRIMITIVE_PROC;
 }
 
-object *add_proc(struct object *arguments) {
+object *add_proc(object *arguments) {
     long result = 0;
     
     while (!is_the_empty_list(arguments)) {
