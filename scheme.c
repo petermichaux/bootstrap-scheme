@@ -664,14 +664,11 @@ object *if_consequent(object *exp) {
 }
 
 object *if_alternative(object *exp) {
-    object *alt;
-    
-    alt = cadddr(exp);
-    if (is_the_empty_list(alt)) {
+    if (is_the_empty_list(cdddr(exp))) {
         return false;
     }
     else {
-        return alt;
+        return cadddr(exp);
     }
 }
 
