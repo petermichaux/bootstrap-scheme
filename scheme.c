@@ -24,7 +24,7 @@
 /**************************** MODEL ******************************/
 
 typedef enum {THE_EMPTY_LIST, BOOLEAN, SYMBOL, FIXNUM,
-              CHARACTER, STRING, PAIR} object_type;
+              CHARACTER, STRING, PAIR, PRIMITIVE_PROC} object_type;
 
 typedef struct object {
     object_type type;
@@ -48,6 +48,9 @@ typedef struct object {
             struct object *car;
             struct object *cdr;
         } pair;
+        struct {
+            struct object *(*fn)(struct object *arguments);
+        } primitive_proc;
     } data;
 } object;
 
@@ -228,6 +231,30 @@ void set_cdr(object *obj, object* value) {
 #define cdddar(obj) cdr(cdr(cdr(car(obj))))
 #define cddddr(obj) cdr(cdr(cdr(cdr(obj))))
 
+object *make_primitive_proc(
+           object *(*fn)(struct object *arguments)) {
+    object *obj;
+
+    obj = alloc_object();
+    obj->type = PRIMITIVE_PROC;
+    obj->data.primitive_proc.fn = fn;
+    return obj;
+}
+
+char is_primitive_proc(object *obj) {
+    return obj->type == PRIMITIVE_PROC;
+}
+
+object *add_proc(struct object *arguments) {
+    long result = 0;
+    
+    while (!is_the_empty_list(arguments)) {
+        result += (car(arguments))->data.fixnum.value;
+        arguments = cdr(arguments);
+    }
+    return make_fixnum(result);
+}
+
 object *enclosing_environment(object *env) {
     return cdr(env);
 }
@@ -248,12 +275,14 @@ object *frame_values(object *frame) {
     return cdr(frame);
 }
 
-void add_binding_to_frame(object *var, object *val, object *frame) {
+void add_binding_to_frame(object *var, object *val, 
+                          object *frame) {
     set_car(frame, cons(var, car(frame)));
     set_cdr(frame, cons(val, cdr(frame)));
 }
 
-object *extend_environment(object *vars, object *vals, object *base_env) {
+object *extend_environment(object *vars, object *vals,
+                           object *base_env) {
     return cons(make_frame(vars, vals), base_env);
 }
 
@@ -353,6 +382,10 @@ void init(void) {
     the_empty_environment = the_empty_list;
 
     the_global_environment = setup_environment();
+
+    define_variable(make_symbol("+"),
+                    make_primitive_proc(add_proc),
+                    the_global_environment);
 }
 
 /***************************** READ ******************************/
@@ -465,7 +498,8 @@ object *read_pair(FILE *in) {
         eat_whitespace(in);
         c = getc(in);
         if (c != ')') {
-            fprintf(stderr, "where was the trailing right paren?\n");
+            fprintf(stderr,
+                    "where was the trailing right paren?\n");
             exit(1);
         }
         return cons(car_obj, cdr_obj);
@@ -537,7 +571,8 @@ object *read(FILE *in) {
                     buffer[i++] = c;
                 }
                 else {
-                    fprintf(stderr, "symbol too long. Maximum length is %d\n", BUFFER_MAX);
+                    fprintf(stderr, "symbol too long. "
+                            "Maximum length is %d\n", BUFFER_MAX);
                     exit(1);
                 }
                 c = getc(in);
@@ -548,7 +583,7 @@ object *read(FILE *in) {
                 return make_symbol(buffer);
             }
             else {
-                fprintf(stderr, "symbol not followed by delimiter. "
+                fprintf(stderr, "symbol not followed by delimiter."
                                 " Found '%c'\n", c);
                 exit(1);
             }
@@ -585,7 +620,8 @@ object *read(FILE *in) {
             return read_pair(in);
         }
         else if (c == '\'') { /* read quoted expression */
-            return cons(quote_symbol, cons(read(in), the_empty_list));
+            return cons(quote_symbol, 
+                        cons(read(in), the_empty_list));
         }
         else {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
@@ -672,19 +708,59 @@ object *if_alternative(object *exp) {
     }
 }
 
+char is_application(object *exp) {
+    return is_pair(exp);
+}
+
+object *operator(object *exp) {
+    return car(exp);
+}
+
+object *operands(object *exp) {
+    return cdr(exp);
+}
+
+char is_no_operands(object *ops) {
+    return is_the_empty_list(ops);
+}
+
+object *first_operand(object *ops) {
+    return car(ops);
+}
+
+object *rest_operands(object *ops) {
+    return cdr(ops);
+}
+
 object *eval(object *exp, object *env);
 
+object *list_of_values(object *exps, object *env) {
+    if (is_no_operands(exps)) {
+        return the_empty_list;
+    }
+    else {
+        return cons(eval(first_operand(exps), env),
+                    list_of_values(rest_operands(exps), env));
+    }
+}
+
 object *eval_assignment(object *exp, object *env) {
-    set_variable_value(assignment_variable(exp), eval(assignment_value(exp), env), env);
+    set_variable_value(assignment_variable(exp), 
+                       eval(assignment_value(exp), env),
+                       env);
     return ok_symbol;
 }
 
 object *eval_definition(object *exp, object *env) {
-    define_variable(definition_variable(exp), eval(definition_value(exp), env), env);
+    define_variable(definition_variable(exp), 
+                    eval(definition_value(exp), env),
+                    env);
     return ok_symbol;
 }
 
 object *eval(object *exp, object *env) {
+    object *procedure;
+    object *arguments;
 
 tailcall:
     if (is_self_evaluating(exp)) {
@@ -707,6 +783,11 @@ tailcall:
                   if_consequent(exp) :
                   if_alternative(exp);
         goto tailcall;
+    }
+    if (is_application(exp)) {
+        procedure = eval(operator(exp), env);
+        arguments = list_of_values(operands(exp), env);
+        return (procedure->data.primitive_proc.fn)(arguments);
     }
     else {
         fprintf(stderr, "cannot eval unknown expression type\n");
@@ -795,6 +876,9 @@ void write(object *obj) {
             write_pair(obj);
             printf(")");
             break;
+        case PRIMITIVE_PROC:
+            printf("#<procedure>");
+            break;
         default:
             fprintf(stderr, "cannot write unknown type\n");
             exit(1);
@@ -824,6 +908,7 @@ int main(void) {
 Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
-Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age
+Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age,
+Raised Fist
 
 */
