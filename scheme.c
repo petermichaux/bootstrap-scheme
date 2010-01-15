@@ -778,13 +778,13 @@ tailcall:
     else if (is_definition(exp)) {
         return eval_definition(exp, env);
     }
-    if (is_if(exp)) {
+    else if (is_if(exp)) {
         exp = is_true(eval(if_predicate(exp), env)) ?
                   if_consequent(exp) :
                   if_alternative(exp);
         goto tailcall;
     }
-    if (is_application(exp)) {
+    else if (is_application(exp)) {
         procedure = eval(operator(exp), env);
         arguments = list_of_values(operands(exp), env);
         return (procedure->data.primitive_proc.fn)(arguments);
