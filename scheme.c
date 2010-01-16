@@ -344,7 +344,7 @@ object *read_pair(FILE *in) {
         c = peek(in);
         if (!is_delimiter(c)) {
             fprintf(stderr, "dot not followed by delimiter\n");
-            exit(-1);
+            exit(1);
         }
         cdr_obj = read(in);
         eat_whitespace(in);
