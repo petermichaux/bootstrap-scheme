@@ -507,7 +507,7 @@ object *read(FILE *in) {
                 return read_character(in);
             default:
                 fprintf(stderr,
-                     "unknown boolean or character literal\n");
+                        "unknown boolean or character literal\n");
                 exit(1);
         }
     }
@@ -528,8 +528,7 @@ object *read(FILE *in) {
             return make_fixnum(num);
         }
         else {
-            fprintf(stderr,
-                    "number not followed by delimiter\n");
+            fprintf(stderr, "number not followed by delimiter\n");
             exit(1);
         }
     }
@@ -556,8 +555,8 @@ object *read(FILE *in) {
             return make_symbol(buffer);
         }
         else {
-            fprintf(stderr, "symbol not followed by delimiter."
-                            " Found '%c'\n", c);
+            fprintf(stderr, "symbol not followed by delimiter. "
+                            "Found '%c'\n", c);
             exit(1);
         }
     }
@@ -571,8 +570,7 @@ object *read(FILE *in) {
                 }
             }
             if (c == EOF) {
-                fprintf(stderr,
-                        "non-terminated string literal\n");
+                fprintf(stderr, "non-terminated string literal\n");
                 exit(1);
             }
             /* subtract 1 to save space for '\0' terminator */
@@ -581,8 +579,8 @@ object *read(FILE *in) {
             }
             else {
                 fprintf(stderr, 
-                     "string too long. Maximum length is %d\n",
-                     BUFFER_MAX);
+                        "string too long. Maximum length is %d\n",
+                        BUFFER_MAX);
                 exit(1);
             }
         }
@@ -593,8 +591,7 @@ object *read(FILE *in) {
         return read_pair(in);
     }
     else if (c == '\'') { /* read quoted expression */
-        return cons(quote_symbol,
-                    cons(read(in), the_empty_list));
+        return cons(quote_symbol, cons(read(in), the_empty_list));
     }
     else {
         fprintf(stderr, "bad input. Unexpected '%c'\n", c);
