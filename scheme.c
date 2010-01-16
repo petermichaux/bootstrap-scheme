@@ -67,6 +67,14 @@ char is_delimiter(int c) {
            c == '"';
 }
 
+int peek(FILE *in) {
+    int c;
+
+    c = getc(in);
+    ungetc(c, in);
+    return c;
+}
+
 object *read(FILE *in) {
     int c;
     short sign = 1;
@@ -76,7 +84,8 @@ object *read(FILE *in) {
         if (isspace(c)) {
             continue;
         }
-        else if (isdigit(c) || c == '-') { /* read a fixnum */
+        else if (isdigit(c) || (c == '-' && (isdigit(peek(in))))) {
+            /* read a fixnum */
             if (c == '-') {
                 sign = -1;
             }
