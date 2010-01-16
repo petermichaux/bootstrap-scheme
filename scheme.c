@@ -348,7 +348,8 @@ object *read_pair(FILE *in) {
         eat_whitespace(in);
         c = getc(in);
         if (c != ')') {
-            fprintf(stderr, "where was the trailing right paren?\n");
+            fprintf(stderr,
+                    "where was the trailing right paren?\n");
             exit(1);
         }
         return cons(car_obj, cdr_obj);
@@ -420,7 +421,8 @@ object *read(FILE *in) {
                     buffer[i++] = c;
                 }
                 else {
-                    fprintf(stderr, "symbol too long. Maximum length is %d\n", BUFFER_MAX);
+                    fprintf(stderr, "symbol too long. "
+                            "Maximum length is %d\n", BUFFER_MAX);
                     exit(1);
                 }
                 c = getc(in);
@@ -431,7 +433,7 @@ object *read(FILE *in) {
                 return make_symbol(buffer);
             }
             else {
-                fprintf(stderr, "symbol not followed by delimiter. "
+                fprintf(stderr, "symbol not followed by delimiter."
                                 " Found '%c'\n", c);
                 exit(1);
             }
@@ -468,7 +470,8 @@ object *read(FILE *in) {
             return read_pair(in);
         }
         else if (c == '\'') { /* read quoted expression */
-            return cons(quote_symbol, cons(read(in), the_empty_list));
+            return cons(quote_symbol,
+                        cons(read(in), the_empty_list));
         }
         else {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
