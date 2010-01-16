@@ -573,7 +573,6 @@ void init(void) {
     add_primitive_procedure("cdr"     , cdr_proc);
     add_primitive_procedure("set-car!", set_car_proc);
     add_primitive_procedure("set-cdr!", set_cdr_proc);
-
 }
 
 /***************************** READ ******************************/
