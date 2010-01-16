@@ -341,7 +341,8 @@ object *read(FILE *in) {
                     exit(1);
             }
         }
-        else if (isdigit(c) || c == '-') { /* read a fixnum */
+        else if (isdigit(c) || (c == '-' && (isdigit(peek(in))))) {
+            /* read a fixnum */
             if (c == '-') {
                 sign = -1;
             }
