@@ -276,7 +276,7 @@ object *lookup_variable_value(object *var, object *env) {
         env = enclosing_environment(env);
     }
     fprintf(stderr, "Unbound variable.\n");
-    exit(13);
+    exit(1);
 }
 
 void set_variable_value(object *var, object *val, object *env) {
@@ -463,7 +463,7 @@ object *read_pair(FILE *in) {
         c = peek(in);
         if (!is_delimiter(c)) {
             fprintf(stderr, "dot not followed by delimiter\n");
-            exit(-1);
+            exit(1);
         }
         cdr_obj = read(in);
         eat_whitespace(in);
@@ -589,8 +589,7 @@ object *read(FILE *in) {
         return read_pair(in);
     }
     else if (c == '\'') { /* read quoted expression */
-        return cons(quote_symbol, 
-                    cons(read(in), the_empty_list));
+        return cons(quote_symbol, cons(read(in), the_empty_list));
     }
     else {
         fprintf(stderr, "bad input. Unexpected '%c'\n", c);
