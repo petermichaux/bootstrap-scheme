@@ -85,6 +85,10 @@ char is_false(object *obj) {
     return obj == false;
 }
 
+char is_true(object *obj) {
+    return !is_false(obj);
+}
+
 object *make_symbol(char *value) {
     object *obj;
     object *element;
