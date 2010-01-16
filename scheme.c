@@ -303,7 +303,7 @@ object *lookup_variable_value(object *var, object *env) {
         }
         env = enclosing_environment(env);
     }
-    fprintf(stderr, "Unbound variable.\n");
+    fprintf(stderr, "unbound variable\n");
     exit(1);
 }
 
@@ -326,7 +326,7 @@ void set_variable_value(object *var, object *val, object *env) {
         }
         env = enclosing_environment(env);
     }
-    fprintf(stderr, "unbound variable");
+    fprintf(stderr, "unbound variable\n");
     exit(1);
 }
 
@@ -416,7 +416,7 @@ void eat_whitespace(FILE *in) {
         if (isspace(c)) {
             continue;
         }
-        if (c == ';') { /* comments are whitespace also */
+        else if (c == ';') { /* comments are whitespace also */
             while (((c = getc(in)) != EOF) && (c != '\n'));
             continue;
         }
