@@ -126,7 +126,7 @@ void eat_whitespace(FILE *in) {
         if (isspace(c)) {
             continue;
         }
-        if (c == ';') { /* comments are whitespace also */
+        else if (c == ';') { /* comments are whitespace also */
             while (((c = getc(in)) != EOF) && (c != '\n'));
             continue;
         }
