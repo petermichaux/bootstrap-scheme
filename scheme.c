@@ -187,51 +187,50 @@ object *read(FILE *in) {
     short sign = 1;
     long num = 0;
 
-        eat_whitespace(in);
-    
-        c = getc(in);    
+    eat_whitespace(in);
 
-        if (c == '#') { /* read a boolean or character */
-            c = getc(in);
-            switch (c) {
-                case 't':
-                    return true;
-                case 'f':
-                    return false;
-                case '\\':
-                    return read_character(in);
-                default:
-                    fprintf(stderr,
-                         "unknown boolean or character literal\n");
-                    exit(1);
-            }
-        }
-        else if (isdigit(c) || (c == '-' && (isdigit(peek(in))))) {
-            /* read a fixnum */
-            if (c == '-') {
-                sign = -1;
-            }
-            else {
-                ungetc(c, in);
-            }
-            while (isdigit(c = getc(in))) {
-                num = (num * 10) + (c - '0');
-            }
-            num *= sign;
-            if (is_delimiter(c)) {
-                ungetc(c, in);
-                return make_fixnum(num);
-            }
-            else {
+    c = getc(in);    
+
+    if (c == '#') { /* read a boolean or character */
+        c = getc(in);
+        switch (c) {
+            case 't':
+                return true;
+            case 'f':
+                return false;
+            case '\\':
+                return read_character(in);
+            default:
                 fprintf(stderr,
-                        "number not followed by delimiter\n");
+                        "unknown boolean or character literal\n");
                 exit(1);
-            }
+        }
+    }
+    else if (isdigit(c) || (c == '-' && (isdigit(peek(in))))) {
+        /* read a fixnum */
+        if (c == '-') {
+            sign = -1;
         }
         else {
-            fprintf(stderr, "bad input. Unexpected '%c'\n", c);
+            ungetc(c, in);
+        }
+        while (isdigit(c = getc(in))) {
+            num = (num * 10) + (c - '0');
+        }
+        num *= sign;
+        if (is_delimiter(c)) {
+            ungetc(c, in);
+            return make_fixnum(num);
+        }
+        else {
+            fprintf(stderr, "number not followed by delimiter\n");
             exit(1);
         }
+    }
+    else {
+        fprintf(stderr, "bad input. Unexpected '%c'\n", c);
+        exit(1);
+    }
     fprintf(stderr, "read illegal state\n");
     exit(1);
 }
