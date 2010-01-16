@@ -248,12 +248,14 @@ object *frame_values(object *frame) {
     return cdr(frame);
 }
 
-void add_binding_to_frame(object *var, object *val, object *frame) {
+void add_binding_to_frame(object *var, object *val,
+                          object *frame) {
     set_car(frame, cons(var, car(frame)));
     set_cdr(frame, cons(val, cdr(frame)));
 }
 
-object *extend_environment(object *vars, object *vals, object *base_env) {
+object *extend_environment(object *vars, object *vals,
+                           object *base_env) {
     return cons(make_frame(vars, vals), base_env);
 }
 
@@ -465,7 +467,8 @@ object *read_pair(FILE *in) {
         eat_whitespace(in);
         c = getc(in);
         if (c != ')') {
-            fprintf(stderr, "where was the trailing right paren?\n");
+            fprintf(stderr,
+                    "where was the trailing right paren?\n");
             exit(1);
         }
         return cons(car_obj, cdr_obj);
@@ -537,7 +540,8 @@ object *read(FILE *in) {
                     buffer[i++] = c;
                 }
                 else {
-                    fprintf(stderr, "symbol too long. Maximum length is %d\n", BUFFER_MAX);
+                    fprintf(stderr, "symbol too long. "
+                            "Maximum length is %d\n", BUFFER_MAX);
                     exit(1);
                 }
                 c = getc(in);
@@ -548,7 +552,7 @@ object *read(FILE *in) {
                 return make_symbol(buffer);
             }
             else {
-                fprintf(stderr, "symbol not followed by delimiter. "
+                fprintf(stderr, "symbol not followed by delimiter."
                                 " Found '%c'\n", c);
                 exit(1);
             }
@@ -585,7 +589,8 @@ object *read(FILE *in) {
             return read_pair(in);
         }
         else if (c == '\'') { /* read quoted expression */
-            return cons(quote_symbol, cons(read(in), the_empty_list));
+            return cons(quote_symbol,
+                        cons(read(in), the_empty_list));
         }
         else {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
@@ -675,12 +680,16 @@ object *if_alternative(object *exp) {
 object *eval(object *exp, object *env);
 
 object *eval_assignment(object *exp, object *env) {
-    set_variable_value(assignment_variable(exp), eval(assignment_value(exp), env), env);
+    set_variable_value(assignment_variable(exp),
+                       eval(assignment_value(exp), env),
+                       env);
     return ok_symbol;
 }
 
 object *eval_definition(object *exp, object *env) {
-    define_variable(definition_variable(exp), eval(definition_value(exp), env), env);
+    define_variable(definition_variable(exp),
+                    eval(definition_value(exp), env),
+                    env);
     return ok_symbol;
 }
 
