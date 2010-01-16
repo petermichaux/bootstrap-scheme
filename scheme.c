@@ -431,7 +431,7 @@ object *read(FILE *in) {
                 return make_symbol(buffer);
             }
             else {
-                fprintf(stderr, "symbol not followed by delimiter. "
+                fprintf(stderr, "symbol not followed by delimiter."
                                 " Found '%c'\n", c);
                 exit(1);
             }
