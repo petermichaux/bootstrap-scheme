@@ -371,110 +371,108 @@ object *read(FILE *in) {
 #define BUFFER_MAX 1000
     char buffer[BUFFER_MAX];
 
-        eat_whitespace(in);
-    
-        c = getc(in);    
+    eat_whitespace(in);
 
-        if (c == '#') { /* read a boolean or character */
-            c = getc(in);
-            switch (c) {
-                case 't':
-                    return true;
-                case 'f':
-                    return false;
-                case '\\':
-                    return read_character(in);
-                default:
-                    fprintf(stderr,
-                         "unknown boolean or character literal\n");
-                    exit(1);
-            }
-        }
-        else if (isdigit(c) || (c == '-' && (isdigit(peek(in))))) {
-            /* read a fixnum */
-            if (c == '-') {
-                sign = -1;
-            }
-            else {
-                ungetc(c, in);
-            }
-            while (isdigit(c = getc(in))) {
-                num = (num * 10) + (c - '0');
-            }
-            num *= sign;
-            if (is_delimiter(c)) {
-                ungetc(c, in);
-                return make_fixnum(num);
-            }
-            else {
+    c = getc(in);    
+
+    if (c == '#') { /* read a boolean or character */
+        c = getc(in);
+        switch (c) {
+            case 't':
+                return true;
+            case 'f':
+                return false;
+            case '\\':
+                return read_character(in);
+            default:
                 fprintf(stderr,
-                        "number not followed by delimiter\n");
+                        "unknown boolean or character literal\n");
                 exit(1);
-            }
         }
-        else if (is_initial(c) ||
-                 ((c == '+' || c == '-') &&
-                  is_delimiter(peek(in)))) { /* read a symbol */
-            i = 0;
-            while (is_initial(c) || isdigit(c) ||
-                   c == '+' || c == '-') {
-                /* subtract 1 to save space for '\0' terminator */
-                if (i < BUFFER_MAX - 1) {
-                    buffer[i++] = c;
-                }
-                else {
-                    fprintf(stderr, "symbol too long. "
-                            "Maximum length is %d\n", BUFFER_MAX);
-                    exit(1);
-                }
-                c = getc(in);
-            }
-            if (is_delimiter(c)) {
-                buffer[i] = '\0';
-                ungetc(c, in);
-                return make_symbol(buffer);
-            }
-            else {
-                fprintf(stderr, "symbol not followed by delimiter."
-                                " Found '%c'\n", c);
-                exit(1);
-            }
-        }
-        else if (c == '"') { /* read a string */
-            i = 0;
-            while ((c = getc(in)) != '"') {
-                if (c == '\\') {
-                    c = getc(in);
-                    if (c == 'n') {
-                        c = '\n';
-                    }
-                }
-                if (c == EOF) {
-                    fprintf(stderr,
-                            "non-terminated string literal\n");
-                    exit(1);
-                }
-                /* subtract 1 to save space for '\0' terminator */
-                if (i < BUFFER_MAX - 1) {
-                    buffer[i++] = c;
-                }
-                else {
-                    fprintf(stderr, 
-                         "string too long. Maximum length is %d\n",
-                         BUFFER_MAX);
-                    exit(1);
-                }
-            }
-            buffer[i] = '\0';
-            return make_string(buffer);
-        }
-        else if (c == '(') { /* read the empty list or pair */
-            return read_pair(in);
+    }
+    else if (isdigit(c) || (c == '-' && (isdigit(peek(in))))) {
+        /* read a fixnum */
+        if (c == '-') {
+            sign = -1;
         }
         else {
-            fprintf(stderr, "bad input. Unexpected '%c'\n", c);
+            ungetc(c, in);
+        }
+        while (isdigit(c = getc(in))) {
+            num = (num * 10) + (c - '0');
+        }
+        num *= sign;
+        if (is_delimiter(c)) {
+            ungetc(c, in);
+            return make_fixnum(num);
+        }
+        else {
+            fprintf(stderr, "number not followed by delimiter\n");
             exit(1);
         }
+    }
+    else if (is_initial(c) ||
+             ((c == '+' || c == '-') &&
+              is_delimiter(peek(in)))) { /* read a symbol */
+        i = 0;
+        while (is_initial(c) || isdigit(c) ||
+               c == '+' || c == '-') {
+            /* subtract 1 to save space for '\0' terminator */
+            if (i < BUFFER_MAX - 1) {
+                buffer[i++] = c;
+            }
+            else {
+                fprintf(stderr, "symbol too long. "
+                        "Maximum length is %d\n", BUFFER_MAX);
+                exit(1);
+            }
+            c = getc(in);
+        }
+        if (is_delimiter(c)) {
+            buffer[i] = '\0';
+            ungetc(c, in);
+            return make_symbol(buffer);
+        }
+        else {
+            fprintf(stderr, "symbol not followed by delimiter. "
+                            "Found '%c'\n", c);
+            exit(1);
+        }
+    }
+    else if (c == '"') { /* read a string */
+        i = 0;
+        while ((c = getc(in)) != '"') {
+            if (c == '\\') {
+                c = getc(in);
+                if (c == 'n') {
+                    c = '\n';
+                }
+            }
+            if (c == EOF) {
+                fprintf(stderr, "non-terminated string literal\n");
+                exit(1);
+            }
+            /* subtract 1 to save space for '\0' terminator */
+            if (i < BUFFER_MAX - 1) {
+                buffer[i++] = c;
+            }
+            else {
+                fprintf(stderr, 
+                        "string too long. Maximum length is %d\n",
+                        BUFFER_MAX);
+                exit(1);
+            }
+        }
+        buffer[i] = '\0';
+        return make_string(buffer);
+    }
+    else if (c == '(') { /* read the empty list or pair */
+        return read_pair(in);
+    }
+    else {
+        fprintf(stderr, "bad input. Unexpected '%c'\n", c);
+        exit(1);
+    }
     fprintf(stderr, "read illegal state\n");
     exit(1);
 }
