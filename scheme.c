@@ -712,6 +712,8 @@ tailcall:
         fprintf(stderr, "cannot eval unknown expression type\n");
         exit(1);
     }
+    fprintf(stderr, "eval illegal state\n");
+    exit(1);
 }
 
 /**************************** PRINT ******************************/
