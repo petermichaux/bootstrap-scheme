@@ -108,7 +108,7 @@ void init(void) {
 char is_delimiter(int c) {
     return isspace(c) || c == EOF ||
            c == '('   || c == ')' ||
-           c == '"';
+           c == '"'   || c == ';';
 }
 
 int peek(FILE *in) {
@@ -117,6 +117,22 @@ int peek(FILE *in) {
     c = getc(in);
     ungetc(c, in);
     return c;
+}
+
+void eat_whitespace(FILE *in) {
+    int c;
+    
+    while ((c = getc(in)) != EOF) {
+        if (isspace(c)) {
+            continue;
+        }
+        if (c == ';') { /* comments are whitespace also */
+            while (((c = getc(in)) != EOF) && (c != '\n'));
+            continue;
+        }
+        ungetc(c, in);
+        break;
+    }
 }
 
 void eat_expected_string(FILE *in, char *str) {
@@ -171,11 +187,11 @@ object *read(FILE *in) {
     short sign = 1;
     long num = 0;
 
-    while ((c = getc(in)) != EOF) {
-        if (isspace(c)) {
-            continue;
-        }
-        else if (c == '#') { /* read a boolean or character */
+        eat_whitespace(in);
+    
+        c = getc(in);    
+
+        if (c == '#') { /* read a boolean or character */
             c = getc(in);
             switch (c) {
                 case 't':
@@ -216,7 +232,6 @@ object *read(FILE *in) {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
             exit(1);
         }
-    }
     fprintf(stderr, "read illegal state\n");
     exit(1);
 }
