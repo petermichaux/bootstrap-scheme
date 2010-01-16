@@ -311,6 +311,106 @@ object *add_proc(object *arguments) {
     return make_fixnum(result);
 }
 
+object *sub_proc(object *arguments) {
+    long result;
+    
+    result = (car(arguments))->data.fixnum.value;
+    while (!is_the_empty_list(arguments = cdr(arguments))) {
+        result -= (car(arguments))->data.fixnum.value;
+    }
+    return make_fixnum(result);
+}
+
+object *mul_proc(object *arguments) {
+    long result = 1;
+    
+    while (!is_the_empty_list(arguments)) {
+        result *= (car(arguments))->data.fixnum.value;
+        arguments = cdr(arguments);
+    }
+    return make_fixnum(result);
+}
+
+object *quotient_proc(object *arguments) {
+    return make_fixnum(
+        ((car(arguments) )->data.fixnum.value)/
+        ((cadr(arguments))->data.fixnum.value));
+}
+
+object *remainder_proc(object *arguments) {
+    return make_fixnum(
+        ((car(arguments) )->data.fixnum.value)%
+        ((cadr(arguments))->data.fixnum.value));
+}
+
+object *is_number_equal_proc(object *arguments) {
+    long value;
+    
+    value = (car(arguments))->data.fixnum.value;
+    while (!is_the_empty_list(arguments = cdr(arguments))) {
+        if (value != ((car(arguments))->data.fixnum.value)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+object *is_less_than_proc(object *arguments) {
+    long previous;
+    long next;
+    
+    previous = (car(arguments))->data.fixnum.value;
+    while (!is_the_empty_list(arguments = cdr(arguments))) {
+        next = (car(arguments))->data.fixnum.value;
+        if (previous < next) {
+            previous = next;
+        }
+        else {
+            return false;
+        }
+    }
+    return true;
+}
+
+object *is_greater_than_proc(object *arguments) {
+    long previous;
+    long next;
+    
+    previous = (car(arguments))->data.fixnum.value;
+    while (!is_the_empty_list(arguments = cdr(arguments))) {
+        next = (car(arguments))->data.fixnum.value;
+        if (previous > next) {
+            previous = next;
+        }
+        else {
+            return false;
+        }
+    }
+    return true;
+}
+
+object *cons_proc(object *arguments) {
+    return cons(car(arguments), cadr(arguments));
+}
+
+object *car_proc(object *arguments) {
+    return caar(arguments);
+}
+
+object *cdr_proc(object *arguments) {
+    return cdar(arguments);
+}
+
+object *set_car_proc(object *arguments) {
+    set_car(car(arguments), cadr(arguments));
+    return ok_symbol;
+}
+
+object *set_cdr_proc(object *arguments) {
+    set_cdr(car(arguments), cadr(arguments));
+    return ok_symbol;
+}
+
 object *enclosing_environment(object *env) {
     return cdr(env);
 }
@@ -459,7 +559,21 @@ void init(void) {
     add_primitive_procedure("symbol->string", symbol_to_string_proc);
     add_primitive_procedure("string->symbol", string_to_symbol_proc);
       
-    add_primitive_procedure("+"       , add_proc);
+    add_primitive_procedure("+"        , add_proc);
+    add_primitive_procedure("-"        , sub_proc);
+    add_primitive_procedure("*"        , mul_proc);
+    add_primitive_procedure("quotient" , quotient_proc);
+    add_primitive_procedure("remainder", remainder_proc);
+    add_primitive_procedure("="        , is_number_equal_proc);
+    add_primitive_procedure("<"        , is_less_than_proc);
+    add_primitive_procedure(">"        , is_greater_than_proc);
+
+    add_primitive_procedure("cons"    , cons_proc);
+    add_primitive_procedure("car"     , car_proc);
+    add_primitive_procedure("cdr"     , cdr_proc);
+    add_primitive_procedure("set-car!", set_car_proc);
+    add_primitive_procedure("set-cdr!", set_cdr_proc);
+
 }
 
 /***************************** READ ******************************/
