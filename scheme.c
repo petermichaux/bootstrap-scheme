@@ -362,7 +362,7 @@ void init(void) {
 char is_delimiter(int c) {
     return isspace(c) || c == EOF ||
            c == '('   || c == ')' ||
-           c == '"';
+           c == '"'   || c == ';';
 }
 
 char is_initial(int c) {
@@ -383,6 +383,10 @@ void eat_whitespace(FILE *in) {
     
     while ((c = getc(in)) != EOF) {
         if (isspace(c)) {
+            continue;
+        }
+        if (c == ';') { /* comments are whitespace also */
+            while (((c = getc(in)) != EOF) && (c != '\n'));
             continue;
         }
         ungetc(c, in);
@@ -459,8 +463,8 @@ object *read_pair(FILE *in) {
     c = getc(in);    
     if (c == '.') { /* read improper list */
         c = peek(in);
-        if (!isspace(c)) {
-            fprintf(stderr, "dot not followed by whitespace\n");
+        if (!is_delimiter(c)) {
+            fprintf(stderr, "dot not followed by delimiter\n");
             exit(-1);
         }
         cdr_obj = read(in);
@@ -488,11 +492,11 @@ object *read(FILE *in) {
 #define BUFFER_MAX 1000
     char buffer[BUFFER_MAX];
 
-    while ((c = getc(in)) != EOF) {
-        if (isspace(c)) {
-            continue;
-        }
-        else if (c == '#') { /* read a boolean or character */
+        eat_whitespace(in);
+    
+        c = getc(in);    
+
+        if (c == '#') { /* read a boolean or character */
             c = getc(in);
             switch (c) {
                 case 't':
@@ -596,7 +600,6 @@ object *read(FILE *in) {
             fprintf(stderr, "bad input. Unexpected '%c'\n", c);
             exit(1);
         }
-    }
     fprintf(stderr, "read illegal state\n");
     exit(1);
 }
