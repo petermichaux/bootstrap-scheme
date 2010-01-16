@@ -245,6 +245,62 @@ char is_primitive_proc(object *obj) {
     return obj->type == PRIMITIVE_PROC;
 }
 
+object *is_null_proc(object *arguments) {
+    return is_the_empty_list(car(arguments)) ? true : false;
+}
+
+object *is_boolean_proc(object *arguments) {
+    return is_boolean(car(arguments)) ? true : false;
+}
+
+object *is_symbol_proc(object *arguments) {
+    return is_symbol(car(arguments)) ? true : false;
+}
+
+object *is_integer_proc(object *arguments) {
+    return is_fixnum(car(arguments)) ? true : false;
+}
+
+object *is_char_proc(object *arguments) {
+    return is_character(car(arguments)) ? true : false;
+}
+
+object *is_string_proc(object *arguments) {
+    return is_string(car(arguments)) ? true : false;
+}
+
+object *is_pair_proc(object *arguments) {
+    return is_pair(car(arguments)) ? true : false;
+}
+
+object *char_to_integer_proc(object *arguments) {
+    return make_fixnum((car(arguments))->data.character.value);
+}
+
+object *integer_to_char_proc(object *arguments) {
+    return make_character((car(arguments))->data.fixnum.value);
+}
+
+/* see K&R 2e page 64 for an idea for a safer conversion function */
+object *number_to_string_proc(object *arguments) {
+    char buffer[100];
+
+    sprintf(buffer, "%ld", (car(arguments))->data.fixnum.value);
+    return make_string(buffer);
+}
+
+object *string_to_number_proc(object *arguments) {
+    return make_fixnum(atoi((car(arguments))->data.string.value));
+}
+
+object *symbol_to_string_proc(object *arguments) {
+    return make_string((car(arguments))->data.symbol.value);
+}
+
+object *string_to_symbol_proc(object *arguments) {
+    return make_symbol((car(arguments))->data.string.value);
+}
+
 object *add_proc(object *arguments) {
     long result = 0;
     
@@ -383,9 +439,27 @@ void init(void) {
 
     the_global_environment = setup_environment();
 
-    define_variable(make_symbol("+"),
-                    make_primitive_proc(add_proc),
+#define add_primitive_procedure(scheme_name, c_name)    \
+    define_variable(make_symbol(scheme_name),           \
+                    make_primitive_proc(c_name),        \
                     the_global_environment);
+
+    add_primitive_procedure("null?"   , is_null_proc);
+    add_primitive_procedure("boolean?", is_boolean_proc);
+    add_primitive_procedure("symbol?" , is_symbol_proc);
+    add_primitive_procedure("integer?", is_integer_proc);
+    add_primitive_procedure("char?"   , is_char_proc);
+    add_primitive_procedure("string?" , is_string_proc);
+    add_primitive_procedure("pair?"   , is_pair_proc);
+    
+    add_primitive_procedure("char->integer" , char_to_integer_proc);
+    add_primitive_procedure("integer->char" , integer_to_char_proc);
+    add_primitive_procedure("number->string", number_to_string_proc);
+    add_primitive_procedure("string->number", string_to_number_proc);
+    add_primitive_procedure("symbol->string", symbol_to_string_proc);
+    add_primitive_procedure("string->symbol", string_to_symbol_proc);
+      
+    add_primitive_procedure("+"       , add_proc);
 }
 
 /***************************** READ ******************************/
@@ -911,6 +985,6 @@ Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
 Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age,
-Raised Fist
+Raised Fist, Rage Against the Machine
 
 */
