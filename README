@@ -17,7 +17,7 @@ $ ./scheme
 Welcome to your Scheme REPL. Use ctrl-c to exit.
 > #t
 #t
-> -123
+> -123 ; comment
 -123
 > 007
 7
