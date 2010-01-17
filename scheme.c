@@ -414,6 +414,10 @@ object *set_cdr_proc(object *arguments) {
     return ok_symbol;
 }
 
+object *list_proc(object *arguments) {
+    return arguments;
+}
+
 object *is_eq_proc(object *arguments) {
     object *obj1;
     object *obj2;
@@ -608,6 +612,7 @@ void init(void) {
     add_procedure("cdr"     , cdr_proc);
     add_procedure("set-car!", set_car_proc);
     add_procedure("set-cdr!", set_cdr_proc);
+    add_procedure("list"    , list_proc);
 
     add_procedure("eq?", is_eq_proc);
 }
