@@ -273,6 +273,10 @@ object *is_pair_proc(object *arguments) {
     return is_pair(car(arguments)) ? true : false;
 }
 
+object *is_procedure_proc(object *arguments) {
+    return is_primitive_proc(car(arguments)) ? true : false;
+}
+
 object *char_to_integer_proc(object *arguments) {
     return make_fixnum((car(arguments))->data.character.value);
 }
@@ -281,7 +285,6 @@ object *integer_to_char_proc(object *arguments) {
     return make_character((car(arguments))->data.fixnum.value);
 }
 
-/* see K&R 2e page 64 for an idea for a safer conversion function */
 object *number_to_string_proc(object *arguments) {
     char buffer[100];
 
@@ -539,40 +542,41 @@ void init(void) {
 
     the_global_environment = setup_environment();
 
-#define add_primitive_procedure(scheme_name, c_name)    \
+#define add_procedure(scheme_name, c_name)              \
     define_variable(make_symbol(scheme_name),           \
                     make_primitive_proc(c_name),        \
                     the_global_environment);
 
-    add_primitive_procedure("null?"   , is_null_proc);
-    add_primitive_procedure("boolean?", is_boolean_proc);
-    add_primitive_procedure("symbol?" , is_symbol_proc);
-    add_primitive_procedure("integer?", is_integer_proc);
-    add_primitive_procedure("char?"   , is_char_proc);
-    add_primitive_procedure("string?" , is_string_proc);
-    add_primitive_procedure("pair?"   , is_pair_proc);
+    add_procedure("null?"     , is_null_proc);
+    add_procedure("boolean?"  , is_boolean_proc);
+    add_procedure("symbol?"   , is_symbol_proc);
+    add_procedure("integer?"  , is_integer_proc);
+    add_procedure("char?"     , is_char_proc);
+    add_procedure("string?"   , is_string_proc);
+    add_procedure("pair?"     , is_pair_proc);
+    add_procedure("procedure?", is_procedure_proc);
     
-    add_primitive_procedure("char->integer" , char_to_integer_proc);
-    add_primitive_procedure("integer->char" , integer_to_char_proc);
-    add_primitive_procedure("number->string", number_to_string_proc);
-    add_primitive_procedure("string->number", string_to_number_proc);
-    add_primitive_procedure("symbol->string", symbol_to_string_proc);
-    add_primitive_procedure("string->symbol", string_to_symbol_proc);
+    add_procedure("char->integer" , char_to_integer_proc);
+    add_procedure("integer->char" , integer_to_char_proc);
+    add_procedure("number->string", number_to_string_proc);
+    add_procedure("string->number", string_to_number_proc);
+    add_procedure("symbol->string", symbol_to_string_proc);
+    add_procedure("string->symbol", string_to_symbol_proc);
       
-    add_primitive_procedure("+"        , add_proc);
-    add_primitive_procedure("-"        , sub_proc);
-    add_primitive_procedure("*"        , mul_proc);
-    add_primitive_procedure("quotient" , quotient_proc);
-    add_primitive_procedure("remainder", remainder_proc);
-    add_primitive_procedure("="        , is_number_equal_proc);
-    add_primitive_procedure("<"        , is_less_than_proc);
-    add_primitive_procedure(">"        , is_greater_than_proc);
+    add_procedure("+"        , add_proc);
+    add_procedure("-"        , sub_proc);
+    add_procedure("*"        , mul_proc);
+    add_procedure("quotient" , quotient_proc);
+    add_procedure("remainder", remainder_proc);
+    add_procedure("="        , is_number_equal_proc);
+    add_procedure("<"        , is_less_than_proc);
+    add_procedure(">"        , is_greater_than_proc);
 
-    add_primitive_procedure("cons"    , cons_proc);
-    add_primitive_procedure("car"     , car_proc);
-    add_primitive_procedure("cdr"     , cdr_proc);
-    add_primitive_procedure("set-car!", set_car_proc);
-    add_primitive_procedure("set-cdr!", set_cdr_proc);
+    add_procedure("cons"    , cons_proc);
+    add_procedure("car"     , car_proc);
+    add_procedure("cdr"     , cdr_proc);
+    add_procedure("set-car!", set_car_proc);
+    add_procedure("set-cdr!", set_cdr_proc);
 }
 
 /***************************** READ ******************************/

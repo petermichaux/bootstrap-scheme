@@ -7,6 +7,7 @@
     * char?
     * string?
     * pair?
+    * procedure?
     * number->string
     * string->number
     * symbol->string
