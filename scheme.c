@@ -429,6 +429,37 @@ object *set_cdr_proc(object *arguments) {
     return ok_symbol;
 }
 
+object *is_eq_proc(object *arguments) {
+    object *obj1;
+    object *obj2;
+    
+    obj1 = car(arguments);
+    obj2 = cadr(arguments);
+    
+    if (obj1->type != obj2->type) {
+        return false;
+    }
+    switch (obj1->type) {
+        case FIXNUM:
+            return (obj1->data.fixnum.value == 
+                    obj2->data.fixnum.value) ?
+                        true : false;
+            break;
+        case CHARACTER:
+            return (obj1->data.character.value == 
+                    obj2->data.character.value) ?
+                        true : false;
+            break;
+        case STRING:
+            return (strcmp(obj1->data.string.value, 
+                           obj2->data.string.value) == 0) ?
+                        true : false;
+            break;
+        default:
+            return (obj1 == obj2) ? true : false;
+    }
+}
+
 object *make_compound_proc(object *parameters, object *body,
                            object* env) {
     object *obj;
@@ -609,6 +640,8 @@ void init(void) {
     add_procedure("cdr"     , cdr_proc);
     add_procedure("set-car!", set_car_proc);
     add_procedure("set-cdr!", set_cdr_proc);
+
+    add_procedure("eq?", is_eq_proc);
 }
 
 /***************************** READ ******************************/

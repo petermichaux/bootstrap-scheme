@@ -30,6 +30,7 @@
     * cdr
     * set-car!
     * set-cdr!
+    * eq?
 
 0.11 - January 15, 2010 - Peter Michaux
   - add a first primitive procedure: +
