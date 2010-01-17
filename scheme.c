@@ -24,7 +24,8 @@
 /**************************** MODEL ******************************/
 
 typedef enum {THE_EMPTY_LIST, BOOLEAN, SYMBOL, FIXNUM,
-              CHARACTER, STRING, PAIR, PRIMITIVE_PROC} object_type;
+              CHARACTER, STRING, PAIR, PRIMITIVE_PROC,
+              COMPOUND_PROC} object_type;
 
 typedef struct object {
     object_type type;
@@ -51,6 +52,11 @@ typedef struct object {
         struct {
             struct object *(*fn)(struct object *arguments);
         } primitive_proc;
+        struct {
+            struct object *parameters;
+            struct object *body;
+            struct object *env;
+        } compound_proc;
     } data;
 } object;
 
@@ -75,6 +81,7 @@ object *define_symbol;
 object *set_symbol;
 object *ok_symbol;
 object *if_symbol;
+object *lambda_symbol;
 object *the_empty_environment;
 object *the_global_environment;
 
@@ -273,6 +280,18 @@ object *is_pair_proc(object *arguments) {
     return is_pair(car(arguments)) ? true : false;
 }
 
+char is_compound_proc(object *obj);
+
+object *is_procedure_proc(object *arguments) {
+    object *obj;
+    
+    obj = car(arguments);
+    return (is_primitive_proc(obj) ||
+            is_compound_proc(obj)) ?
+                true :
+                false;
+}
+
 object *char_to_integer_proc(object *arguments) {
     return make_fixnum((car(arguments))->data.character.value);
 }
@@ -281,7 +300,6 @@ object *integer_to_char_proc(object *arguments) {
     return make_character((car(arguments))->data.fixnum.value);
 }
 
-/* see K&R 2e page 64 for an idea for a safer conversion function */
 object *number_to_string_proc(object *arguments) {
     char buffer[100];
 
@@ -411,6 +429,22 @@ object *set_cdr_proc(object *arguments) {
     return ok_symbol;
 }
 
+object *make_compound_proc(object *parameters, object *body,
+                           object* env) {
+    object *obj;
+    
+    obj = alloc_object();
+    obj->type = COMPOUND_PROC;
+    obj->data.compound_proc.parameters = parameters;
+    obj->data.compound_proc.body = body;
+    obj->data.compound_proc.env = env;
+    return obj;
+}
+
+char is_compound_proc(object *obj) {
+    return obj->type == COMPOUND_PROC;
+}
+
 object *enclosing_environment(object *env) {
     return cdr(env);
 }
@@ -534,45 +568,47 @@ void init(void) {
     set_symbol = make_symbol("set!");
     ok_symbol = make_symbol("ok");
     if_symbol = make_symbol("if");
+    lambda_symbol = make_symbol("lambda");
     
     the_empty_environment = the_empty_list;
 
     the_global_environment = setup_environment();
 
-#define add_primitive_procedure(scheme_name, c_name)    \
+#define add_procedure(scheme_name, c_name)              \
     define_variable(make_symbol(scheme_name),           \
                     make_primitive_proc(c_name),        \
                     the_global_environment);
 
-    add_primitive_procedure("null?"   , is_null_proc);
-    add_primitive_procedure("boolean?", is_boolean_proc);
-    add_primitive_procedure("symbol?" , is_symbol_proc);
-    add_primitive_procedure("integer?", is_integer_proc);
-    add_primitive_procedure("char?"   , is_char_proc);
-    add_primitive_procedure("string?" , is_string_proc);
-    add_primitive_procedure("pair?"   , is_pair_proc);
+    add_procedure("null?"      , is_null_proc);
+    add_procedure("boolean?"   , is_boolean_proc);
+    add_procedure("symbol?"    , is_symbol_proc);
+    add_procedure("integer?"   , is_integer_proc);
+    add_procedure("char?"      , is_char_proc);
+    add_procedure("string?"    , is_string_proc);
+    add_procedure("pair?"      , is_pair_proc);
+    add_procedure("procedure?" , is_procedure_proc);
     
-    add_primitive_procedure("char->integer" , char_to_integer_proc);
-    add_primitive_procedure("integer->char" , integer_to_char_proc);
-    add_primitive_procedure("number->string", number_to_string_proc);
-    add_primitive_procedure("string->number", string_to_number_proc);
-    add_primitive_procedure("symbol->string", symbol_to_string_proc);
-    add_primitive_procedure("string->symbol", string_to_symbol_proc);
+    add_procedure("char->integer" , char_to_integer_proc);
+    add_procedure("integer->char" , integer_to_char_proc);
+    add_procedure("number->string", number_to_string_proc);
+    add_procedure("string->number", string_to_number_proc);
+    add_procedure("symbol->string", symbol_to_string_proc);
+    add_procedure("string->symbol", string_to_symbol_proc);
       
-    add_primitive_procedure("+"        , add_proc);
-    add_primitive_procedure("-"        , sub_proc);
-    add_primitive_procedure("*"        , mul_proc);
-    add_primitive_procedure("quotient" , quotient_proc);
-    add_primitive_procedure("remainder", remainder_proc);
-    add_primitive_procedure("="        , is_number_equal_proc);
-    add_primitive_procedure("<"        , is_less_than_proc);
-    add_primitive_procedure(">"        , is_greater_than_proc);
+    add_procedure("+"        , add_proc);
+    add_procedure("-"        , sub_proc);
+    add_procedure("*"        , mul_proc);
+    add_procedure("quotient" , quotient_proc);
+    add_procedure("remainder", remainder_proc);
+    add_procedure("="        , is_number_equal_proc);
+    add_procedure("<"        , is_less_than_proc);
+    add_procedure(">"        , is_greater_than_proc);
 
-    add_primitive_procedure("cons"    , cons_proc);
-    add_primitive_procedure("car"     , car_proc);
-    add_primitive_procedure("cdr"     , cdr_proc);
-    add_primitive_procedure("set-car!", set_car_proc);
-    add_primitive_procedure("set-cdr!", set_cdr_proc);
+    add_procedure("cons"    , cons_proc);
+    add_procedure("car"     , car_proc);
+    add_procedure("cdr"     , cdr_proc);
+    add_procedure("set-car!", set_car_proc);
+    add_procedure("set-cdr!", set_cdr_proc);
 }
 
 /***************************** READ ******************************/
@@ -867,11 +903,23 @@ char is_definition(object *exp) {
 }
 
 object *definition_variable(object *exp) {
-    return cadr(exp);
+    if (is_symbol(cadr(exp))) {
+        return cadr(exp);
+    }
+    else {
+        return caadr(exp);
+    }
 }
 
+object *make_lambda(object *parameters, object *body);
+
 object *definition_value(object *exp) {
-    return caddr(exp);
+    if (is_symbol(cadr(exp))) {
+        return caddr(exp);
+    }
+    else {
+        return make_lambda(cdadr(exp), cddr(exp));
+    }
 }
 
 char is_if(object *expression) {
@@ -895,8 +943,36 @@ object *if_alternative(object *exp) {
     }
 }
 
+object *make_lambda(object *parameters, object *body) {
+    return cons(lambda_symbol, cons(parameters, body));
+}
+
+char is_lambda(object *exp) {
+    return is_tagged_list(exp, lambda_symbol);
+}
+
+object *lambda_parameters(object *exp) {
+    return cadr(exp);
+}
+
+object *lambda_body(object *exp) {
+    return cddr(exp);
+}
+
 char is_application(object *exp) {
     return is_pair(exp);
+}
+
+char is_last_exp(object *seq) {
+    return is_the_empty_list(cdr(seq));
+}
+
+object *first_exp(object *seq) {
+    return car(seq);
+}
+
+object *rest_exps(object *seq) {
+    return cdr(seq);
 }
 
 object *operator(object *exp) {
@@ -971,10 +1047,34 @@ tailcall:
                   if_alternative(exp);
         goto tailcall;
     }
+    else if (is_lambda(exp)) {
+        return make_compound_proc(lambda_parameters(exp),
+                                  lambda_body(exp),
+                                  env);
+    }
     else if (is_application(exp)) {
         procedure = eval(operator(exp), env);
         arguments = list_of_values(operands(exp), env);
-        return (procedure->data.primitive_proc.fn)(arguments);
+        if (is_primitive_proc(procedure)) {
+            return (procedure->data.primitive_proc.fn)(arguments);
+        }
+        else if (is_compound_proc(procedure)) {
+            env = extend_environment( 
+                       procedure->data.compound_proc.parameters,
+                       arguments,
+                       procedure->data.compound_proc.env);
+            exp = procedure->data.compound_proc.body;
+            while (!is_last_exp(exp)) {
+                eval(first_exp(exp), env);
+                exp = rest_exps(exp);
+            }
+            exp = first_exp(exp);
+            goto tailcall;
+        }
+        else {
+            fprintf(stderr, "unknown procedure type\n");
+            exit(1);
+        }
     }
     else {
         fprintf(stderr, "cannot eval unknown expression type\n");
@@ -1066,6 +1166,7 @@ void write(object *obj) {
             printf(")");
             break;
         case PRIMITIVE_PROC:
+        case COMPOUND_PROC:
             printf("#<procedure>");
             break;
         default:
@@ -1098,6 +1199,6 @@ Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
 Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age,
-Raised Fist, Rage Against the Machine
+Raised Fist, Rage Against the Machine, Primus
 
 */

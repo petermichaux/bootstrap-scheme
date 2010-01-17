@@ -45,6 +45,18 @@ ok
 6
 > +
 #<procedure>
+> ((lamba (x) x) 1)
+1
+> (define (add x y) (+ x y))
+ok
+> (add 1 2)
+3
+> add
+#<procedure>
+> (define c ((lambda (x) (lambda () x)) 3))
+ok
+> (c)
+3
 > ^C
 $
 

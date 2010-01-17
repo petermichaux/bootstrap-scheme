@@ -1,3 +1,6 @@
+0.13 - January 17, 2010 - Peter Michaux
+  - lambda the ultimate!
+
 0.12 - January 16, 2010 - Peter Michaux
   - add more primitive procedures
     * null?
@@ -7,6 +10,7 @@
     * char?
     * string?
     * pair?
+    * procedure?
     * number->string
     * string->number
     * symbol->string
