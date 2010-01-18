@@ -83,6 +83,8 @@ object *ok_symbol;
 object *if_symbol;
 object *lambda_symbol;
 object *begin_symbol;
+object *cond_symbol;
+object *else_symbol;
 object *the_empty_environment;
 object *the_global_environment;
 
@@ -606,6 +608,8 @@ void init(void) {
     if_symbol = make_symbol("if");
     lambda_symbol = make_symbol("lambda");
     begin_symbol = make_symbol("begin");
+    cond_symbol = make_symbol("cond");
+    else_symbol = make_symbol("else");
     
     the_empty_environment = the_empty_list;
 
@@ -962,6 +966,14 @@ object *definition_value(object *exp) {
     }
 }
 
+object *make_if(object *predicate, object *consequent,
+                object *alternative) {
+    return cons(if_symbol,
+                cons(predicate,
+                     cons(consequent,
+                          cons(alternative, the_empty_list))));
+}
+
 char is_if(object *expression) {
     return is_tagged_list(expression, if_symbol);
 }
@@ -999,16 +1011,16 @@ object *lambda_body(object *exp) {
     return cddr(exp);
 }
 
+object *make_begin(object *seq) {
+    return cons(begin_symbol, seq);
+}
+
 char is_begin(object *exp) {
     return is_tagged_list(exp, begin_symbol);
 }
 
 object *begin_actions(object *exp) {
     return cdr(exp);
-}
-
-char is_application(object *exp) {
-    return is_pair(exp);
 }
 
 char is_last_exp(object *seq) {
@@ -1021,6 +1033,73 @@ object *first_exp(object *seq) {
 
 object *rest_exps(object *seq) {
     return cdr(seq);
+}
+
+char is_cond(object *exp) {
+    return is_tagged_list(exp, cond_symbol);
+}
+
+object *cond_clauses(object *exp) {
+    return cdr(exp);
+}
+
+object *cond_predicate(object *clause) {
+    return car(clause);
+}
+
+object *cond_actions(object *clause) {
+    return cdr(clause);
+}
+
+char is_cond_else_clause(object *clause) {
+    return cond_predicate(clause) == else_symbol;
+}
+
+object *sequence_to_exp(object *seq) {
+    if (is_the_empty_list(seq)) {
+        return seq;
+    }
+    else if (is_last_exp(seq)) {
+        return first_exp(seq);
+    }
+    else {
+        return make_begin(seq);
+    }
+}
+
+object *expand_clauses(object *clauses) {
+    object *first;
+    object *rest;
+    
+    if (is_the_empty_list(clauses)) {
+        return false;
+    }
+    else {
+        first = car(clauses);
+        rest  = cdr(clauses);
+        if (is_cond_else_clause(first)) {
+            if (is_the_empty_list(rest)) {
+                return sequence_to_exp(cond_actions(first));
+            }
+            else {
+                fprintf(stderr, "else clause isn't last cond->if");
+                exit(1);
+            }
+        }
+        else {
+            return make_if(cond_predicate(first),
+                           sequence_to_exp(cond_actions(first)),
+                           expand_clauses(rest));
+        }
+    }
+}
+
+object *cond_to_if(object *exp) {
+    return expand_clauses(cond_clauses(exp));
+}
+
+char is_application(object *exp) {
+    return is_pair(exp);
 }
 
 object *operator(object *exp) {
@@ -1107,6 +1186,10 @@ tailcall:
             exp = rest_exps(exp);
         }
         exp = first_exp(exp);
+        goto tailcall;
+    }
+    else if (is_cond(exp)) {
+        exp = cond_to_if(exp);
         goto tailcall;
     }
     else if (is_application(exp)) {
