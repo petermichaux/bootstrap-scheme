@@ -82,6 +82,7 @@ object *set_symbol;
 object *ok_symbol;
 object *if_symbol;
 object *lambda_symbol;
+object *begin_symbol;
 object *the_empty_environment;
 object *the_global_environment;
 
@@ -604,6 +605,7 @@ void init(void) {
     ok_symbol = make_symbol("ok");
     if_symbol = make_symbol("if");
     lambda_symbol = make_symbol("lambda");
+    begin_symbol = make_symbol("begin");
     
     the_empty_environment = the_empty_list;
 
@@ -997,6 +999,14 @@ object *lambda_body(object *exp) {
     return cddr(exp);
 }
 
+char is_begin(object *exp) {
+    return is_tagged_list(exp, begin_symbol);
+}
+
+object *begin_actions(object *exp) {
+    return cdr(exp);
+}
+
 char is_application(object *exp) {
     return is_pair(exp);
 }
@@ -1089,6 +1099,15 @@ tailcall:
         return make_compound_proc(lambda_parameters(exp),
                                   lambda_body(exp),
                                   env);
+    }
+    else if (is_begin(exp)) {
+        exp = begin_actions(exp);
+        while (!is_last_exp(exp)) {
+            eval(first_exp(exp), env);
+            exp = rest_exps(exp);
+        }
+        exp = first_exp(exp);
+        goto tailcall;
     }
     else if (is_application(exp)) {
         procedure = eval(operator(exp), env);
@@ -1237,6 +1256,7 @@ Slipknot, Neil Young, Pearl Jam, The Dead Weather,
 Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
 Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age,
-Raised Fist, Rage Against the Machine, Primus
+Raised Fist, Rage Against the Machine, Primus, Black Label Society,
+The Offspring
 
 */
