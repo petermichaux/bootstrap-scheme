@@ -1007,10 +1007,6 @@ object *begin_actions(object *exp) {
     return cdr(exp);
 }
 
-char is_application(object *exp) {
-    return is_pair(exp);
-}
-
 char is_last_exp(object *seq) {
     return is_the_empty_list(cdr(seq));
 }
@@ -1021,6 +1017,10 @@ object *first_exp(object *seq) {
 
 object *rest_exps(object *seq) {
     return cdr(seq);
+}
+
+char is_application(object *exp) {
+    return is_pair(exp);
 }
 
 object *operator(object *exp) {
