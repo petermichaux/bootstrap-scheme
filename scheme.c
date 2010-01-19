@@ -85,6 +85,7 @@ object *lambda_symbol;
 object *begin_symbol;
 object *cond_symbol;
 object *else_symbol;
+object *let_symbol;
 object *the_empty_environment;
 object *the_global_environment;
 
@@ -610,6 +611,7 @@ void init(void) {
     begin_symbol = make_symbol("begin");
     cond_symbol = make_symbol("cond");
     else_symbol = make_symbol("else");
+    let_symbol = make_symbol("let");
     
     the_empty_environment = the_empty_list;
 
@@ -1098,6 +1100,10 @@ object *cond_to_if(object *exp) {
     return expand_clauses(cond_clauses(exp));
 }
 
+object *make_application(object *operator, object *operands) {
+    return cons(operator, operands);
+}
+
 char is_application(object *exp) {
     return is_pair(exp);
 }
@@ -1120,6 +1126,55 @@ object *first_operand(object *ops) {
 
 object *rest_operands(object *ops) {
     return cdr(ops);
+}
+
+char is_let(object *exp) {
+    return is_tagged_list(exp, let_symbol);
+}
+
+object *let_bindings(object *exp) {
+    return cadr(exp);
+}
+
+object *let_body(object *exp) {
+    return cddr(exp);
+}
+
+object *binding_parameter(object *binding) {
+    return car(binding);
+}
+
+object *binding_argument(object *binding) {
+    return cadr(binding);
+}
+
+object *bindings_parameters(object *bindings) {
+    return is_the_empty_list(bindings) ?
+               the_empty_list :
+               cons(binding_parameter(car(bindings)),
+                    bindings_parameters(cdr(bindings)));
+}
+
+object *bindings_arguments(object *bindings) {
+    return is_the_empty_list(bindings) ?
+               the_empty_list :
+               cons(binding_argument(car(bindings)),
+                    bindings_arguments(cdr(bindings)));
+}
+
+object *let_parameters(object *exp) {
+    return bindings_parameters(let_bindings(exp));
+}
+
+object *let_arguments(object *exp) {
+    return bindings_arguments(let_bindings(exp));
+}
+
+object *let_to_application(object *exp) {
+    return make_application(
+               make_lambda(let_parameters(exp),
+                           let_body(exp)),
+               let_arguments(exp));
 }
 
 object *eval(object *exp, object *env);
@@ -1190,6 +1245,10 @@ tailcall:
     }
     else if (is_cond(exp)) {
         exp = cond_to_if(exp);
+        goto tailcall;
+    }
+    else if (is_let(exp)) {
+        exp = let_to_application(exp);
         goto tailcall;
     }
     else if (is_application(exp)) {
