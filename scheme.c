@@ -1203,12 +1203,7 @@ tailcall:
                        procedure->data.compound_proc.parameters,
                        arguments,
                        procedure->data.compound_proc.env);
-            exp = procedure->data.compound_proc.body;
-            while (!is_last_exp(exp)) {
-                eval(first_exp(exp), env);
-                exp = rest_exps(exp);
-            }
-            exp = first_exp(exp);
+            exp = make_begin(procedure->data.compound_proc.body);
             goto tailcall;
         }
         else {
