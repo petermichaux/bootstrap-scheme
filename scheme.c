@@ -86,6 +86,8 @@ object *begin_symbol;
 object *cond_symbol;
 object *else_symbol;
 object *let_symbol;
+object *and_symbol;
+object *or_symbol;
 object *the_empty_environment;
 object *the_global_environment;
 
@@ -612,6 +614,8 @@ void init(void) {
     cond_symbol = make_symbol("cond");
     else_symbol = make_symbol("else");
     let_symbol = make_symbol("let");
+    and_symbol = make_symbol("and");
+    or_symbol = make_symbol("or");
     
     the_empty_environment = the_empty_list;
 
@@ -1177,6 +1181,22 @@ object *let_to_application(object *exp) {
                let_arguments(exp));
 }
 
+char is_and(object *exp) {
+    return is_tagged_list(exp, and_symbol);
+}
+
+object *and_tests(object *exp) {
+    return cdr(exp);
+}
+
+char is_or(object *exp) {
+    return is_tagged_list(exp, or_symbol);
+}
+
+object *or_tests(object *exp) {
+    return cdr(exp);
+}
+
 object *eval(object *exp, object *env);
 
 object *list_of_values(object *exps, object *env) {
@@ -1206,6 +1226,7 @@ object *eval_definition(object *exp, object *env) {
 object *eval(object *exp, object *env) {
     object *procedure;
     object *arguments;
+    object *result;
 
 tailcall:
     if (is_self_evaluating(exp)) {
@@ -1249,6 +1270,36 @@ tailcall:
     }
     else if (is_let(exp)) {
         exp = let_to_application(exp);
+        goto tailcall;
+    }
+    else if (is_and(exp)) {
+        exp = and_tests(exp);
+        if (is_the_empty_list(exp)) {
+            return true;
+        }
+        while (!is_last_exp(exp)) {
+            result = eval(first_exp(exp), env);
+            if (is_false(result)) {
+                return result;
+            }
+            exp = rest_exps(exp);
+        }
+        exp = first_exp(exp);
+        goto tailcall;
+    }
+    else if (is_or(exp)) {
+        exp = or_tests(exp);
+        if (is_the_empty_list(exp)) {
+            return false;
+        }
+        while (!is_last_exp(exp)) {
+            result = eval(first_exp(exp), env);
+            if (is_true(result)) {
+                return result;
+            }
+            exp = rest_exps(exp);
+        }
+        exp = first_exp(exp);
         goto tailcall;
     }
     else if (is_application(exp)) {
@@ -1394,6 +1445,6 @@ Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
 Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age,
 Raised Fist, Rage Against the Machine, Primus, Black Label Society,
-The Offspring
+The Offspring, Nickelback
 
 */
