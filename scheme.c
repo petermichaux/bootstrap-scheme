@@ -1209,8 +1209,18 @@ object *apply_operator(object *arguments) {
     return car(arguments);
 }
 
+object *prepare_apply_operands(object *arguments) {
+    if (is_the_empty_list(cdr(arguments))) {
+        return car(arguments);
+    }
+    else {
+        return cons(car(arguments),
+                    prepare_apply_operands(cdr(arguments)));
+    }
+}
+
 object *apply_operands(object *arguments) {
-    return cadr(arguments); 
+    return prepare_apply_operands(cdr(arguments));
 }
 
 object *eval(object *exp, object *env);
