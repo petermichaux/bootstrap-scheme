@@ -470,6 +470,12 @@ object *is_eq_proc(object *arguments) {
     }
 }
 
+object *apply_proc(object *arguments) {
+    fprintf(stderr, "illegal state: The body of the apply "
+            "primitive procedure should not execute.\n");
+    exit(1);
+}
+
 object *make_compound_proc(object *parameters, object *body,
                            object* env) {
     object *obj;
@@ -659,6 +665,8 @@ void init(void) {
     add_procedure("list"    , list_proc);
 
     add_procedure("eq?", is_eq_proc);
+
+    add_procedure("apply", apply_proc);
 }
 
 /***************************** READ ******************************/
@@ -1197,6 +1205,14 @@ object *or_tests(object *exp) {
     return cdr(exp);
 }
 
+object *apply_operator(object *arguments) {
+    return car(arguments);
+}
+
+object *apply_operands(object *arguments) {
+    return cadr(arguments); 
+}
+
 object *eval(object *exp, object *env);
 
 object *list_of_values(object *exps, object *env) {
@@ -1305,6 +1321,14 @@ tailcall:
     else if (is_application(exp)) {
         procedure = eval(operator(exp), env);
         arguments = list_of_values(operands(exp), env);
+
+        /* handle apply specially for tailcall requirement */
+        if (is_primitive_proc(procedure) && 
+            procedure->data.primitive_proc.fn == apply_proc) {
+            procedure = apply_operator(arguments);
+            arguments = apply_operands(arguments);
+        }
+
         if (is_primitive_proc(procedure)) {
             return (procedure->data.primitive_proc.fn)(arguments);
         }
@@ -1445,6 +1469,6 @@ Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
 Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age,
 Raised Fist, Rage Against the Machine, Primus, Black Label Society,
-The Offspring, Nickelback
+The Offspring, Nickelback, Metallica, Jeff Beck, M.I.R.V.
 
 */
