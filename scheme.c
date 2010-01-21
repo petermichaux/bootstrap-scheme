@@ -897,6 +897,9 @@ object *read(FILE *in) {
     else if (c == '\'') { /* read quoted expression */
         return cons(quote_symbol, cons(read(in), the_empty_list));
     }
+    else if (c == EOF) {
+        return NULL;
+    }
     else {
         fprintf(stderr, "bad input. Unexpected '%c'\n", c);
         exit(1);
@@ -1423,6 +1426,7 @@ void write(object *obj) {
 /***************************** REPL ******************************/
 
 int main(void) {
+    object *exp;
 
     printf("Welcome to Bootstrap Scheme. "
            "Use ctrl-c to exit.\n");
@@ -1431,9 +1435,15 @@ int main(void) {
 
     while (1) {
         printf("> ");
-        write(eval(read(stdin), the_global_environment));
+        exp = read(stdin);
+        if (exp == NULL) {
+            break;
+        }
+        write(eval(exp, the_global_environment));
         printf("\n");
     }
+    
+    printf("Goodbye\n");
 
     return 0;
 }
