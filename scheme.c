@@ -476,6 +476,10 @@ object *apply_proc(object *arguments) {
     exit(1);
 }
 
+object *interaction_environment_proc() {
+    return the_global_environment;
+}
+
 object *make_compound_proc(object *parameters, object *body,
                            object* env) {
     object *obj;
@@ -667,6 +671,8 @@ void init(void) {
     add_procedure("eq?", is_eq_proc);
 
     add_procedure("apply", apply_proc);
+    
+    add_procedure("interaction-environment", interaction_environment_proc)
 }
 
 /***************************** READ ******************************/
@@ -1479,6 +1485,7 @@ Dave Matthews Band, Alice in Chains, White Zombie, Blind Melon,
 Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
 Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age,
 Raised Fist, Rage Against the Machine, Primus, Black Label Society,
-The Offspring, Nickelback, Metallica, Jeff Beck, M.I.R.V.
+The Offspring, Nickelback, Metallica, Jeff Beck, M.I.R.V.,
+The Tragically Hip
 
 */
