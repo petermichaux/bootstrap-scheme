@@ -476,8 +476,20 @@ object *apply_proc(object *arguments) {
     exit(1);
 }
 
-object *interaction_environment_proc() {
+object *interaction_environment_proc(object *arguments) {
     return the_global_environment;
+}
+
+object *setup_environment(void);
+
+object *null_environment_proc(object *arguments) {
+    return setup_environment();
+}
+
+object *make_environment(void);
+
+object *environment_proc(object *arguments) {
+    return make_environment();
 }
 
 object *make_compound_proc(object *parameters, object *body,
@@ -601,40 +613,12 @@ object *setup_environment(void) {
     return initial_env;
 }
 
-void init(void) {
-    the_empty_list = alloc_object();
-    the_empty_list->type = THE_EMPTY_LIST;
-
-    false = alloc_object();
-    false->type = BOOLEAN;
-    false->data.boolean.value = 0;
-
-    true = alloc_object();
-    true->type = BOOLEAN;
-    true->data.boolean.value = 1;
-    
-    symbol_table = the_empty_list;
-    quote_symbol = make_symbol("quote");
-    define_symbol = make_symbol("define");
-    set_symbol = make_symbol("set!");
-    ok_symbol = make_symbol("ok");
-    if_symbol = make_symbol("if");
-    lambda_symbol = make_symbol("lambda");
-    begin_symbol = make_symbol("begin");
-    cond_symbol = make_symbol("cond");
-    else_symbol = make_symbol("else");
-    let_symbol = make_symbol("let");
-    and_symbol = make_symbol("and");
-    or_symbol = make_symbol("or");
-    
-    the_empty_environment = the_empty_list;
-
-    the_global_environment = setup_environment();
+void populate_environment(object *env) {
 
 #define add_procedure(scheme_name, c_name)              \
     define_variable(make_symbol(scheme_name),           \
                     make_primitive_proc(c_name),        \
-                    the_global_environment);
+                    env);
 
     add_procedure("null?"      , is_null_proc);
     add_procedure("boolean?"   , is_boolean_proc);
@@ -672,7 +656,49 @@ void init(void) {
 
     add_procedure("apply", apply_proc);
     
-    add_procedure("interaction-environment", interaction_environment_proc)
+    add_procedure("interaction-environment", 
+                                     interaction_environment_proc);
+    add_procedure("null-environment", null_environment_proc);
+    add_procedure("environment",      environment_proc);
+}
+
+object *make_environment(void) {
+    object *env;
+    
+    env = setup_environment();
+    populate_environment(env);
+    return env;
+}
+
+void init(void) {
+    the_empty_list = alloc_object();
+    the_empty_list->type = THE_EMPTY_LIST;
+
+    false = alloc_object();
+    false->type = BOOLEAN;
+    false->data.boolean.value = 0;
+
+    true = alloc_object();
+    true->type = BOOLEAN;
+    true->data.boolean.value = 1;
+    
+    symbol_table = the_empty_list;
+    quote_symbol = make_symbol("quote");
+    define_symbol = make_symbol("define");
+    set_symbol = make_symbol("set!");
+    ok_symbol = make_symbol("ok");
+    if_symbol = make_symbol("if");
+    lambda_symbol = make_symbol("lambda");
+    begin_symbol = make_symbol("begin");
+    cond_symbol = make_symbol("cond");
+    else_symbol = make_symbol("else");
+    let_symbol = make_symbol("let");
+    and_symbol = make_symbol("and");
+    or_symbol = make_symbol("or");
+    
+    the_empty_environment = the_empty_list;
+
+    the_global_environment = make_environment();
 }
 
 /***************************** READ ******************************/
