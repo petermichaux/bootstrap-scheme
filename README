@@ -73,6 +73,12 @@ ok
 3
 > (apply + '(1 2 3))
 6
+> (define env (environment))
+ok
+> (eval '(define z 25) env)
+ok
+> (eval 'z env)
+25
 > ^C
 $
 

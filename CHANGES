@@ -1,6 +1,7 @@
 0.19 - January 23, 2010 - Peter Michaux
   - expose the interaction environment
   - allow creation of a new environments
+  - add eval form
 
 0.18 - January 22, 2010 - Peter Michaux
   - add apply form
