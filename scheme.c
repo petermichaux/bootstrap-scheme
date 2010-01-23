@@ -501,7 +501,7 @@ object *eval_proc(object *arguments) {
 object *make_compound_proc(object *parameters, object *body,
                            object* env) {
     object *obj;
-    
+
     obj = alloc_object();
     obj->type = COMPOUND_PROC;
     obj->data.compound_proc.parameters = parameters;
