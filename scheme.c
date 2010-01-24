@@ -554,6 +554,12 @@ object *close_input_port_proc(object *arguments) {
     return ok_symbol;
 }
 
+char is_input_port(object *obj);
+
+object *is_input_port_proc(object *arguments) {
+    return is_input_port(car(arguments)) ? true : false;
+}
+
 object *read_proc(object *arguments) {
     FILE *in;
     
@@ -563,13 +569,13 @@ object *read_proc(object *arguments) {
     return read(in);
 }
 
-object *make_output_port(FILE *in);
+char is_eof_object(object *obj);
 
-char is_input_port(object *obj);
-
-object *is_input_port_proc(object *arguments) {
-    return is_input_port(car(arguments)) ? true : false;
+object *is_eof_object_proc(object *arguments) {
+    return is_eof_object(car(arguments)) ? true : false;
 }
+
+object *make_output_port(FILE *in);
 
 object *open_output_port_proc(object *arguments) {
     char *filename;
@@ -582,12 +588,6 @@ object *open_output_port_proc(object *arguments) {
         exit(1);
     }
     return make_output_port(out);
-}
-
-char is_eof_object(object *obj);
-
-object *is_eof_object_proc(object *arguments) {
-    return is_eof_object(car(arguments)) ? true : false;
 }
 
 object *close_output_port_proc(object *arguments) {
