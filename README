@@ -79,7 +79,17 @@ ok
 ok
 > (eval 'z env)
 25
-> ^C
+> (define out (open-output-port "asdf.txt"))
+ok
+> (write-car #\c out)
+ok
+> (close-output-port out)
+ok
+> (load "program.scm")
+program-loaded
+> (error "bad move")
+"bad move"
+exiting
 $
 
 ----

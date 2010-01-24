@@ -637,6 +637,16 @@ object *write_proc(object *arguments) {
     return ok_symbol;
 }
 
+object *error_proc(object *arguments) {
+    while (!is_the_empty_list(arguments)) {
+        write(stderr, car(arguments));
+        fprintf(stderr, " ");
+        arguments = cdr(arguments);
+    };
+    printf("\nexiting\n");
+    exit(1);
+}
+
 object *make_compound_proc(object *parameters, object *body,
                            object* env) {
     object *obj;
@@ -731,7 +741,7 @@ object *lookup_variable_value(object *var, object *env) {
         }
         env = enclosing_environment(env);
     }
-    fprintf(stderr, "unbound variable\n");
+    fprintf(stderr, "unbound variable, %s\n", var->data.symbol.value);
     exit(1);
 }
 
@@ -754,7 +764,7 @@ void set_variable_value(object *var, object *val, object *env) {
         }
         env = enclosing_environment(env);
     }
-    fprintf(stderr, "unbound variable\n");
+    fprintf(stderr, "unbound variable, %s\n", var->data.symbol.value);
     exit(1);
 }
 
@@ -848,6 +858,8 @@ void populate_environment(object *env) {
     add_procedure("output-port?"     , is_output_port_proc);
     add_procedure("write-char"       , write_char_proc);
     add_procedure("write"            , write_proc);
+
+    add_procedure("error", error_proc);
 }
 
 object *make_environment(void) {
@@ -1651,7 +1663,7 @@ void write(FILE *out, object *obj) {
                     fprintf(out, "space");
                     break;
                 default:
-                    putchar(c);
+                    putc(c, out);
             }
             break;
         case STRING:
@@ -1669,7 +1681,7 @@ void write(FILE *out, object *obj) {
                         fprintf(out, "\\\"");
                         break;
                     default:
-                        putchar(*str);
+                        putc(*str, out);
                 }
                 str++;
             }
@@ -1681,8 +1693,10 @@ void write(FILE *out, object *obj) {
             fprintf(out, ")");
             break;
         case PRIMITIVE_PROC:
+            fprintf(out, "#<primitive-procedure>");
+            break;
         case COMPOUND_PROC:
-            fprintf(out, "#<procedure>");
+            fprintf(out, "#<compound-procedure>");
             break;
         case INPUT_PORT:
             fprintf(out, "#<input-port>");
