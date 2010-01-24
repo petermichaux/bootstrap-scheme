@@ -562,11 +562,13 @@ object *is_input_port_proc(object *arguments) {
 
 object *read_proc(object *arguments) {
     FILE *in;
+    object *result;
     
     in = is_the_empty_list(arguments) ?
              stdin :
              car(arguments)->data.input_port.stream;
-    return read(in);
+    result = read(in);
+    return (result == NULL) ? eof_object : result;
 }
 
 char is_eof_object(object *obj);
@@ -1705,7 +1707,7 @@ void write(FILE *out, object *obj) {
             fprintf(out, "#<output-port>");
             break;
         case EOF_OBJECT:
-            fprintf(out, "#<EOF>");
+            fprintf(out, "#<eof>");
             break;
         default:
             fprintf(stderr, "cannot write unknown type\n");
