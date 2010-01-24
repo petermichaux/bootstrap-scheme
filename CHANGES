@@ -1,5 +1,5 @@
 0.20 - January 24, 2010 - Peter Michaux
-  - add I/O primitives
+  - add I/O primitive procedures
     * load
     * open-input-port
     * close-input-port
