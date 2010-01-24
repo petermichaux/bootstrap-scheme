@@ -528,6 +528,64 @@ object *load_proc(object *arguments) {
     return result;
 }
 
+object *make_input_port(FILE *in);
+
+object *open_input_port_proc(object *arguments) {
+    char *filename;
+    FILE *in;
+
+    filename = car(arguments)->data.string.value;
+    in = fopen(filename, "r");
+    if (in == NULL) {
+        fprintf(stderr, "could not open file \"%s\"\n", filename);
+        exit(1);
+    }
+    return make_input_port(in);
+}
+
+object *close_input_port_proc(object *arguments) {
+    int result;
+    
+    result = fclose(car(arguments)->data.input_port.stream);
+    if (result == EOF) {
+        fprintf(stderr, "could not close input port\n");
+        exit(1);
+    }
+    return ok_symbol;
+}
+
+object *make_output_port(FILE *in);
+
+object *open_output_port_proc(object *arguments) {
+    char *filename;
+    FILE *out;
+
+    filename = car(arguments)->data.string.value;
+    out = fopen(filename, "w");
+    if (out == NULL) {
+        fprintf(stderr, "could not open file \"%s\"\n", filename);
+        exit(1);
+    }
+    return make_input_port(out);
+}
+
+object *close_output_port_proc(object *arguments) {
+    int result;
+    
+    result = fclose(car(arguments)->data.output_port.stream);
+    if (result == EOF) {
+        fprintf(stderr, "could not close output port\n");
+        exit(1);
+    }
+    return ok_symbol;
+}
+
+char is_eof_object(object *obj);
+
+object *is_eof_object_proc(object *arguments) {
+    return is_eof_object(car(arguments)) ? true : false;
+}
+
 object *make_compound_proc(object *parameters, object *body,
                            object* env) {
     object *obj;
@@ -728,7 +786,12 @@ void populate_environment(object *env) {
     add_procedure("environment"     , environment_proc);
     add_procedure("eval"            , eval_proc);
 
-    add_procedure("load"            , load_proc);
+    add_procedure("load"             , load_proc);
+    add_procedure("open-input-port"  , open_input_port_proc);
+    add_procedure("close-input-port" , close_input_port_proc);
+    add_procedure("eof-object?"      , is_eof_object_proc);
+    add_procedure("open-output-port" , open_output_port_proc);
+    add_procedure("close-output-port", close_output_port_proc);
 }
 
 object *make_environment(void) {
@@ -1566,6 +1629,15 @@ void write(object *obj) {
         case PRIMITIVE_PROC:
         case COMPOUND_PROC:
             printf("#<procedure>");
+            break;
+        case INPUT_PORT:
+            printf("#<input-port>");
+            break;
+        case OUTPUT_PORT:
+            printf("#<output-port>");
+            break;
+        case EOF_OBJECT:
+            printf("#<EOF>");
             break;
         default:
             fprintf(stderr, "cannot write unknown type\n");
