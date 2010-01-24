@@ -554,6 +554,15 @@ object *close_input_port_proc(object *arguments) {
     return ok_symbol;
 }
 
+object *read_proc(object *arguments) {
+    FILE *in;
+    
+    in = is_the_empty_list(arguments) ?
+             stdin :
+             car(arguments)->data.input_port.stream;
+    return read(in);
+}
+
 object *make_output_port(FILE *in);
 
 char is_input_port(object *obj);
@@ -832,6 +841,7 @@ void populate_environment(object *env) {
     add_procedure("open-input-port"  , open_input_port_proc);
     add_procedure("close-input-port" , close_input_port_proc);
     add_procedure("input-port?"      , is_input_port_proc);
+    add_procedure("read"             , read_proc);
     add_procedure("eof-object?"      , is_eof_object_proc);
     add_procedure("open-output-port" , open_output_port_proc);
     add_procedure("close-output-port", close_output_port_proc);

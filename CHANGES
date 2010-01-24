@@ -5,6 +5,7 @@
     * close-input-port
     * input-port?
     * eof-object?
+    * read
     * open-output-port
     * close-output-port
     * output-port?
