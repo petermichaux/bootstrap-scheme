@@ -1561,54 +1561,54 @@ tailcall:
 
 /**************************** PRINT ******************************/
 
-void write(object *obj);
+void write(FILE *out, object *obj);
 
-void write_pair(object *pair) {
+void write_pair(FILE *out, object *pair) {
     object *car_obj;
     object *cdr_obj;
     
     car_obj = car(pair);
     cdr_obj = cdr(pair);
-    write(car_obj);
+    write(out, car_obj);
     if (cdr_obj->type == PAIR) {
-        printf(" ");
-        write_pair(cdr_obj);
+        fprintf(out, " ");
+        write_pair(out, cdr_obj);
     }
     else if (cdr_obj->type == THE_EMPTY_LIST) {
         return;
     }
     else {
-        printf(" . ");
-        write(cdr_obj);
+        fprintf(out, " . ");
+        write(out, cdr_obj);
     }
 }
 
-void write(object *obj) {
+void write(FILE *out, object *obj) {
     char c;
     char *str;
     
     switch (obj->type) {
         case THE_EMPTY_LIST:
-            printf("()");
+            fprintf(out, "()");
             break;
         case BOOLEAN:
-            printf("#%c", is_false(obj) ? 'f' : 't');
+            fprintf(out, "#%c", is_false(obj) ? 'f' : 't');
             break;
         case SYMBOL:
-            printf("%s", obj->data.symbol.value);
+            fprintf(out, "%s", obj->data.symbol.value);
             break;
         case FIXNUM:
-            printf("%ld", obj->data.fixnum.value);
+            fprintf(out, "%ld", obj->data.fixnum.value);
             break;
         case CHARACTER:
             c = obj->data.character.value;
-            printf("#\\");
+            fprintf(out, "#\\");
             switch (c) {
                 case '\n':
-                    printf("newline");
+                    fprintf(out, "newline");
                     break;
                 case ' ':
-                    printf("space");
+                    fprintf(out, "space");
                     break;
                 default:
                     putchar(c);
@@ -1620,13 +1620,13 @@ void write(object *obj) {
             while (*str != '\0') {
                 switch (*str) {
                     case '\n':
-                        printf("\\n");
+                        fprintf(out, "\\n");
                         break;
                     case '\\':
-                        printf("\\\\");
+                        fprintf(out, "\\\\");
                         break;
                     case '"':
-                        printf("\\\"");
+                        fprintf(out, "\\\"");
                         break;
                     default:
                         putchar(*str);
@@ -1636,22 +1636,22 @@ void write(object *obj) {
             putchar('"');
             break;
         case PAIR:
-            printf("(");
-            write_pair(obj);
-            printf(")");
+            fprintf(out, "(");
+            write_pair(out, obj);
+            fprintf(out, ")");
             break;
         case PRIMITIVE_PROC:
         case COMPOUND_PROC:
-            printf("#<procedure>");
+            fprintf(out, "#<procedure>");
             break;
         case INPUT_PORT:
-            printf("#<input-port>");
+            fprintf(out, "#<input-port>");
             break;
         case OUTPUT_PORT:
-            printf("#<output-port>");
+            fprintf(out, "#<output-port>");
             break;
         case EOF_OBJECT:
-            printf("#<EOF>");
+            fprintf(out, "#<EOF>");
             break;
         default:
             fprintf(stderr, "cannot write unknown type\n");
@@ -1675,7 +1675,7 @@ int main(void) {
         if (exp == NULL) {
             break;
         }
-        write(eval(exp, the_global_environment));
+        write(stdout, eval(exp, the_global_environment));
         printf("\n");
     }
     
