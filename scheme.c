@@ -25,7 +25,8 @@
 
 typedef enum {THE_EMPTY_LIST, BOOLEAN, SYMBOL, FIXNUM,
               CHARACTER, STRING, PAIR, PRIMITIVE_PROC,
-              COMPOUND_PROC} object_type;
+              COMPOUND_PROC, INPUT_PORT, OUTPUT_PORT,
+              EOF_OBJECT} object_type;
 
 typedef struct object {
     object_type type;
@@ -57,6 +58,12 @@ typedef struct object {
             struct object *body;
             struct object *env;
         } compound_proc;
+        struct {
+            FILE *stream;
+        } input_port;
+        struct {
+            FILE *stream;
+        } output_port;
     } data;
 } object;
 
@@ -88,6 +95,7 @@ object *else_symbol;
 object *let_symbol;
 object *and_symbol;
 object *or_symbol;
+object *eof_object;
 object *the_empty_environment;
 object *the_global_environment;
 
@@ -536,6 +544,36 @@ char is_compound_proc(object *obj) {
     return obj->type == COMPOUND_PROC;
 }
 
+object *make_input_port(FILE *stream) {
+    object *obj;
+    
+    obj = alloc_object();
+    obj->type = INPUT_PORT;
+    obj->data.input_port.stream = stream;
+    return obj;
+}
+
+char is_input_port(object *obj) {
+    return obj->type == INPUT_PORT;
+}
+
+object *make_ouput_port(FILE *stream) {
+    object *obj;
+    
+    obj = alloc_object();
+    obj->type = OUTPUT_PORT;
+    obj->data.output_port.stream = stream;
+    return obj;
+}
+
+char is_output_port(object *obj) {
+    return obj->type == OUTPUT_PORT;
+}
+
+char is_eof_object(object *obj) {
+    return obj == eof_object;
+}
+
 object *enclosing_environment(object *env) {
     return cdr(env);
 }
@@ -726,6 +764,9 @@ void init(void) {
     let_symbol = make_symbol("let");
     and_symbol = make_symbol("and");
     or_symbol = make_symbol("or");
+    
+    eof_object = alloc_object();
+    eof_object->type = EOF_OBJECT;
     
     the_empty_environment = the_empty_list;
 
