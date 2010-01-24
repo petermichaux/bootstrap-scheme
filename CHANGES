@@ -9,6 +9,7 @@
     * close-output-port
     * output-port?
     * write-char
+    * write
 
 0.19 - January 23, 2010 - Peter Michaux
   - expose the interaction environment

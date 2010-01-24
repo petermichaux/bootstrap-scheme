@@ -612,6 +612,22 @@ object *write_char_proc(object *arguments) {
     return ok_symbol;
 }
 
+void write(FILE *out, object *obj);
+
+object *write_proc(object *arguments) {
+    object *exp;
+    FILE *out;
+    
+    exp = car(arguments);
+    arguments = cdr(arguments);
+    out = is_the_empty_list(arguments) ?
+             stdout :
+             car(arguments)->data.output_port.stream;
+    write(out, exp);
+    fflush(out);
+    return ok_symbol;
+}
+
 object *make_compound_proc(object *parameters, object *body,
                            object* env) {
     object *obj;
@@ -821,6 +837,7 @@ void populate_environment(object *env) {
     add_procedure("close-output-port", close_output_port_proc);
     add_procedure("output-port?"     , is_output_port_proc);
     add_procedure("write-char"       , write_char_proc);
+    add_procedure("write"            , write_proc);
 }
 
 object *make_environment(void) {
@@ -1575,8 +1592,6 @@ tailcall:
 }
 
 /**************************** PRINT ******************************/
-
-void write(FILE *out, object *obj);
 
 void write_pair(FILE *out, object *pair) {
     object *car_obj;
