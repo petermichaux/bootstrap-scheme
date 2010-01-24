@@ -571,6 +571,30 @@ object *read_proc(object *arguments) {
     return (result == NULL) ? eof_object : result;
 }
 
+object *read_char_proc(object *arguments) {
+    FILE *in;
+    int result;
+    
+    in = is_the_empty_list(arguments) ?
+             stdin :
+             car(arguments)->data.input_port.stream;
+    result = getc(in);
+    return (result == EOF) ? eof_object : make_character(result);
+}
+
+int peek(FILE *in);
+
+object *peek_char_proc(object *arguments) {
+    FILE *in;
+    int result;
+    
+    in = is_the_empty_list(arguments) ?
+             stdin :
+             car(arguments)->data.input_port.stream;
+    result = peek(in);
+    return (result == EOF) ? eof_object : make_character(result);
+}
+
 char is_eof_object(object *obj);
 
 object *is_eof_object_proc(object *arguments) {
@@ -854,6 +878,8 @@ void populate_environment(object *env) {
     add_procedure("close-input-port" , close_input_port_proc);
     add_procedure("input-port?"      , is_input_port_proc);
     add_procedure("read"             , read_proc);
+    add_procedure("read-char"        , read_char_proc);
+    add_procedure("peek-char"        , peek_char_proc);
     add_procedure("eof-object?"      , is_eof_object_proc);
     add_procedure("open-output-port" , open_output_port_proc);
     add_procedure("close-output-port", close_output_port_proc);

@@ -6,6 +6,8 @@
     * input-port?
     * eof-object?
     * read
+    * read-char
+    * peek-char
     * open-output-port
     * close-output-port
     * output-port?
