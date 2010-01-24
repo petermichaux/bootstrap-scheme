@@ -572,7 +572,7 @@ object *open_output_port_proc(object *arguments) {
         fprintf(stderr, "could not open file \"%s\"\n", filename);
         exit(1);
     }
-    return make_input_port(out);
+    return make_output_port(out);
 }
 
 char is_eof_object(object *obj);
@@ -596,6 +596,20 @@ char is_output_port(object *obj);
 
 object *is_output_port_proc(object *arguments) {
     return is_output_port(car(arguments)) ? true : false;
+}
+
+object *write_char_proc(object *arguments) {
+    object *character;
+    FILE *out;
+    
+    character = car(arguments);
+    arguments = cdr(arguments);
+    out = is_the_empty_list(arguments) ?
+             stdout :
+             car(arguments)->data.output_port.stream;
+    putc(character->data.character.value, out);    
+    fflush(out);
+    return ok_symbol;
 }
 
 object *make_compound_proc(object *parameters, object *body,
@@ -627,7 +641,7 @@ char is_input_port(object *obj) {
     return obj->type == INPUT_PORT;
 }
 
-object *make_ouput_port(FILE *stream) {
+object *make_output_port(FILE *stream) {
     object *obj;
     
     obj = alloc_object();
@@ -806,6 +820,7 @@ void populate_environment(object *env) {
     add_procedure("open-output-port" , open_output_port_proc);
     add_procedure("close-output-port", close_output_port_proc);
     add_procedure("output-port?"     , is_output_port_proc);
+    add_procedure("write-char"       , write_char_proc);
 }
 
 object *make_environment(void) {
