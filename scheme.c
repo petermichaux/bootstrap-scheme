@@ -556,6 +556,12 @@ object *close_input_port_proc(object *arguments) {
 
 object *make_output_port(FILE *in);
 
+char is_input_port(object *obj);
+
+object *is_input_port_proc(object *arguments) {
+    return is_input_port(car(arguments)) ? true : false;
+}
+
 object *open_output_port_proc(object *arguments) {
     char *filename;
     FILE *out;
@@ -578,6 +584,12 @@ object *close_output_port_proc(object *arguments) {
         exit(1);
     }
     return ok_symbol;
+}
+
+char is_output_port(object *obj);
+
+object *is_output_port_proc(object *arguments) {
+    return is_output_port(car(arguments)) ? true : false;
 }
 
 char is_eof_object(object *obj);
@@ -789,9 +801,11 @@ void populate_environment(object *env) {
     add_procedure("load"             , load_proc);
     add_procedure("open-input-port"  , open_input_port_proc);
     add_procedure("close-input-port" , close_input_port_proc);
+    add_procedure("input-port?"      , is_input_port_proc);
     add_procedure("eof-object?"      , is_eof_object_proc);
     add_procedure("open-output-port" , open_output_port_proc);
     add_procedure("close-output-port", close_output_port_proc);
+    add_procedure("output-port?"     , is_output_port_proc);
 }
 
 object *make_environment(void) {
