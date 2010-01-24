@@ -498,6 +498,28 @@ object *eval_proc(object *arguments) {
     exit(1);
 }
 
+object *read(FILE *in);
+object *eval(object *exp, object *env);
+
+object *load_proc(object *arguments) {
+    char *filename;
+    FILE *in;
+    object *exp;
+    object *result;
+    
+    filename = car(arguments)->data.string.value;
+    in = fopen(filename, "r");
+    if (in == NULL) {
+        fprintf(stderr, "could not load file \"%s\"", filename);
+        exit(1);
+    }
+    while ((exp = read(in)) != NULL) {
+        result = eval(exp, the_global_environment);
+    }
+    fclose(in);
+    return result;
+}
+
 object *make_compound_proc(object *parameters, object *body,
                            object* env) {
     object *obj;
@@ -667,6 +689,8 @@ void populate_environment(object *env) {
     add_procedure("null-environment", null_environment_proc);
     add_procedure("environment"     , environment_proc);
     add_procedure("eval"            , eval_proc);
+
+    add_procedure("load"            , load_proc);
 }
 
 object *make_environment(void) {
@@ -791,8 +815,6 @@ object *read_character(FILE *in) {
     peek_expected_delimiter(in);
     return make_character(c);
 }
-
-object *read(FILE *in);
 
 object *read_pair(FILE *in) {
     int c;
@@ -1273,8 +1295,6 @@ object *eval_environment(object *arguments) {
     return cadr(arguments);
 }
 
-object *eval(object *exp, object *env);
-
 object *list_of_values(object *exps, object *env) {
     if (is_no_operands(exps)) {
         return the_empty_list;
@@ -1545,6 +1565,6 @@ Priestess, Puscifer, Bob Dylan, Them Crooked Vultures,
 Black Sabbath, Pantera, Tool, ZZ Top, Queens of the Stone Age,
 Raised Fist, Rage Against the Machine, Primus, Black Label Society,
 The Offspring, Nickelback, Metallica, Jeff Beck, M.I.R.V.,
-The Tragically Hip
+The Tragically Hip, Willie Nelson, Highwaymen
 
 */
