@@ -575,6 +575,12 @@ object *open_output_port_proc(object *arguments) {
     return make_input_port(out);
 }
 
+char is_eof_object(object *obj);
+
+object *is_eof_object_proc(object *arguments) {
+    return is_eof_object(car(arguments)) ? true : false;
+}
+
 object *close_output_port_proc(object *arguments) {
     int result;
     
@@ -590,12 +596,6 @@ char is_output_port(object *obj);
 
 object *is_output_port_proc(object *arguments) {
     return is_output_port(car(arguments)) ? true : false;
-}
-
-char is_eof_object(object *obj);
-
-object *is_eof_object_proc(object *arguments) {
-    return is_eof_object(car(arguments)) ? true : false;
 }
 
 object *make_compound_proc(object *parameters, object *body,
