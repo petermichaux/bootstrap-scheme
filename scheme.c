@@ -346,7 +346,12 @@ object *add_proc(object *arguments) {
 object *sub_proc(object *arguments) {
     long result;
     
-    result = (car(arguments))->data.fixnum.value;
+    if (is_the_empty_list(cdr(arguments))) {
+        result = -(car(arguments))->data.fixnum.value;
+    }
+    else {
+        result = (car(arguments))->data.fixnum.value;
+    }
     while (!is_the_empty_list(arguments = cdr(arguments))) {
         result -= (car(arguments))->data.fixnum.value;
     }
