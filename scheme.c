@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <gmp.h>
 
 /**************************** MODEL ******************************/
 
@@ -38,7 +39,7 @@ typedef struct object {
             char *value;
         } symbol;
         struct {
-            long value;
+            mpz_t value;
         } fixnum;
         struct {
             char value;
@@ -149,12 +150,12 @@ char is_symbol(object *obj) {
     return obj->type == SYMBOL;
 }
 
-object *make_fixnum(long value) {
+object *make_fixnum(mpz_t value) {
     object *obj;
 
     obj = alloc_object();
     obj->type = FIXNUM;
-    obj->data.fixnum.value = value;
+    mpz_init_set(obj->data.fixnum.value, value);
     return obj;
 }
 
@@ -307,22 +308,28 @@ object *is_procedure_proc(object *arguments) {
 }
 
 object *char_to_integer_proc(object *arguments) {
-    return make_fixnum((car(arguments))->data.character.value);
+    mpz_t res;
+    mpz_init_set_ui(res, (car(arguments))->data.character.value);
+
+    return make_fixnum(res);
 }
 
 object *integer_to_char_proc(object *arguments) {
-    return make_character((car(arguments))->data.fixnum.value);
+    return make_character(mpz_get_ui((car(arguments))->data.fixnum.value));
 }
 
-object *number_to_string_proc(object *arguments) {
-    char buffer[100];
 
-    sprintf(buffer, "%ld", (car(arguments))->data.fixnum.value);
-    return make_string(buffer);
+object *number_to_string_proc(object *arguments) {
+
+    return make_string(mpz_get_str (0, 10, (car(arguments))->data.fixnum.value));
 }
 
 object *string_to_number_proc(object *arguments) {
-    return make_fixnum(atoi((car(arguments))->data.string.value));
+    mpz_t res;
+    mpz_init(res);
+
+    mpz_set_str(res, (car(arguments))->data.string.value, 10);
+    return make_fixnum(res);
 }
 
 object *symbol_to_string_proc(object *arguments) {
@@ -334,90 +341,116 @@ object *string_to_symbol_proc(object *arguments) {
 }
 
 object *add_proc(object *arguments) {
-    long result = 0;
-    
+    mpz_t result;
+    mpz_init(result);
+    mpz_t tmp;
+    mpz_init(tmp);
     while (!is_the_empty_list(arguments)) {
-        result += (car(arguments))->data.fixnum.value;
+        mpz_set(tmp, (car(arguments))->data.fixnum.value);
+        mpz_add(result, result, tmp);
         arguments = cdr(arguments);
     }
+    mpz_clear(tmp);
     return make_fixnum(result);
 }
 
 object *sub_proc(object *arguments) {
-    long result;
-    
-    result = (car(arguments))->data.fixnum.value;
+    mpz_t result;
+    mpz_init(result);
+    mpz_set(result,(car(arguments))->data.fixnum.value);
+    mpz_t tmp;
+    mpz_init(tmp);
     while (!is_the_empty_list(arguments = cdr(arguments))) {
-        result -= (car(arguments))->data.fixnum.value;
+        mpz_set(tmp, (car(arguments))->data.fixnum.value);
+        mpz_sub(result, result, tmp);
     }
+    mpz_clear(tmp);
     return make_fixnum(result);
 }
 
 object *mul_proc(object *arguments) {
-    long result = 1;
+    mpz_t result;
+    mpz_init_set_str(result, "1", 10);
     
     while (!is_the_empty_list(arguments)) {
-        result *= (car(arguments))->data.fixnum.value;
+        mpz_mul(result, result, (car(arguments))->data.fixnum.value);
         arguments = cdr(arguments);
     }
     return make_fixnum(result);
 }
 
 object *quotient_proc(object *arguments) {
-    return make_fixnum(
-        ((car(arguments) )->data.fixnum.value)/
-        ((cadr(arguments))->data.fixnum.value));
+    mpz_t result;
+    mpz_init(result);
+    mpz_cdiv_q(result, (car(arguments))->data.fixnum.value,
+                ((cadr(arguments))->data.fixnum.value));
+    return make_fixnum(result);
 }
 
+
 object *remainder_proc(object *arguments) {
-    return make_fixnum(
-        ((car(arguments) )->data.fixnum.value)%
-        ((cadr(arguments))->data.fixnum.value));
+    mpz_t result;
+    mpz_init(result);
+    mpz_mod(result,(car(arguments))->data.fixnum.value,
+                ((cadr(arguments))->data.fixnum.value));
+    return make_fixnum(result);
 }
 
 object *is_number_equal_proc(object *arguments) {
-    long value;
+    mpz_t value;
+    mpz_init_set(value, (car(arguments))->data.fixnum.value);
     
-    value = (car(arguments))->data.fixnum.value;
     while (!is_the_empty_list(arguments = cdr(arguments))) {
-        if (value != ((car(arguments))->data.fixnum.value)) {
-            return false;
+        if (mpz_cmp(value,((car(arguments))->data.fixnum.value)) == 0) {
+            mpz_clear(value);
+            return true;
         }
     }
-    return true;
+    mpz_clear(value);
+    return false;
 }
 
 object *is_less_than_proc(object *arguments) {
-    long previous;
-    long next;
-    
-    previous = (car(arguments))->data.fixnum.value;
+    mpz_t previous, next;
+    mpz_init(previous);
+    mpz_init(next);
+
+    mpz_set(previous, (car(arguments))->data.fixnum.value);
     while (!is_the_empty_list(arguments = cdr(arguments))) {
-        next = (car(arguments))->data.fixnum.value;
-        if (previous < next) {
-            previous = next;
+        mpz_set(next,(car(arguments))->data.fixnum.value);
+        if (mpz_cmp(previous, next) < 0) {
+            mpz_set(previous, next);
         }
         else {
+            mpz_clear(previous);
+            mpz_clear(next);
             return false;
         }
     }
+    mpz_clear(previous);
+    mpz_clear(next);
     return true;
 }
 
 object *is_greater_than_proc(object *arguments) {
-    long previous;
-    long next;
+    mpz_t previous, next;
+    mpz_init(previous);
+    mpz_init(next);
     
-    previous = (car(arguments))->data.fixnum.value;
+    mpz_set(previous, (car(arguments))->data.fixnum.value);
     while (!is_the_empty_list(arguments = cdr(arguments))) {
-        next = (car(arguments))->data.fixnum.value;
-        if (previous > next) {
-            previous = next;
+        mpz_set(next,(car(arguments))->data.fixnum.value);
+        if (mpz_cmp(previous, next) > 0) {
+            mpz_set(previous, next);
         }
         else {
+            mpz_clear(previous);
+            mpz_clear(next);
             return false;
         }
     }
+    mpz_clear(previous);
+    mpz_clear(next);
     return true;
 }
 
@@ -459,9 +492,9 @@ object *is_eq_proc(object *arguments) {
     }
     switch (obj1->type) {
         case FIXNUM:
-            return (obj1->data.fixnum.value == 
-                    obj2->data.fixnum.value) ?
-                        true : false;
+            return (mpz_cmp(obj1->data.fixnum.value,
+                                obj2->data.fixnum.value) == 0 ?
+                        true : false);
             break;
         case CHARACTER:
             return (obj1->data.character.value == 
@@ -1061,7 +1094,8 @@ object *read(FILE *in) {
     int c;
     short sign = 1;
     int i;
-    long num = 0;
+    mpz_t num;
+    mpz_init(num);
 #define BUFFER_MAX 1000
     char buffer[BUFFER_MAX];
 
@@ -1093,9 +1127,10 @@ object *read(FILE *in) {
             ungetc(c, in);
         }
         while (isdigit(c = getc(in))) {
-            num = (num * 10) + (c - '0');
+            mpz_mul_si(num, num, 10);
+            mpz_add_ui(num, num, c - '0');
         }
-        num *= sign;
+        mpz_mul_si(num, num, sign);
         if (is_delimiter(c)) {
             ungetc(c, in);
             return make_fixnum(num);
@@ -1678,7 +1713,7 @@ void write(FILE *out, object *obj) {
             fprintf(out, "%s", obj->data.symbol.value);
             break;
         case FIXNUM:
-            fprintf(out, "%ld", obj->data.fixnum.value);
+            mpz_out_str(out, 10, obj->data.fixnum.value);
             break;
         case CHARACTER:
             c = obj->data.character.value;
